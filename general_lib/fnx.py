@@ -18,21 +18,5 @@ def postgres_rows_select(connection , statement):
     cur.execute(statement)
     connection.commit()    
     result = cur.fetchall()
-    #html_list = [i[0] for i in html_tuple_list]
-    #html = ' '.join(html_list)
     return result
-
-# def email_result(html_table):
-#     msg = email.mime.Multipart.MIMEMultipart()
-#     body = email.mime.Text.MIMEText(html_table , 'html')
-#     msg.attach(body)
-#     msg['From']    = 'zbabira@sqreamtech.com'
-#     msg['To'] = 'orid@sqreamtech.com'
-#     msg['Subject'] = 'total open issues alert'
-#     recips = 'orid@sqreamtech.com'
-#     server = smtplib.SMTP('smtp.gmail.com')
-#     server.starttls()
-#     server.login('zbabira@gmail.com','sqreamzbabira')
-#     server.sendmail('no-reply@sqreamtech.com', recips, msg.as_string())
-#     server.quit()
 

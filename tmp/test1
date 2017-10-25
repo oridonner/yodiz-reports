@@ -1,0 +1,15 @@
+[
+'<html><head><style>h1 {color: green;text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerrblue;color:white;}.tdErr {
+blue;color:white;}.tdErr {color:red;}.tdOk {color:green;}</style></head><body><h1>Yodiz Report</h1><table>', 
+'<tr><th>severity</th><th>blocked</th><th>open_bugs</th><th>in_progress</th><th>ql</th></tr>'
+,)
+, 
+('<tr><td>Ba_approved</th><th>total</th></tr>', 
+'<tr><td>Blocker</td><td>1</td><td>1</td><td>1</td><td>79</td><td>82</td></tr>', 
+'<tr><td>Critical</td><td>3</td><td>13</td><td>8</td><td>68</td><td>92</td>18</td><td>2</td><td>29<td></tr>', 
+'<tr><td>Major</td><td>2</td><td>18</td><td>2</td><td>29</td><td>51</td></tr>', 
+'<tr><td>Normal</td><td>5</td><td>94</td><td>7</td><td>275</td><td>381</td></tr>', 
+'<tr><td>Minor</),
+ ('</table></body></html>td><td>0</td><td>16</td><td>0</td><td>3</td><td>19</td></tr>', 
+ '</table></body></html>'
+ ]

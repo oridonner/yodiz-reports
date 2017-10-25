@@ -30,8 +30,30 @@ CREATE TABLE Issues(
     Severity          text,
     ReleaseId         int,
     SprintId          int,
-    SprintStartDate   timestamp without time zone,
     EffortEstimate    real,
     EffortRemaining   real,
     EffortLogged      real
+);
+
+DROP TABLE IF EXISTS Severity;
+CREATE TABLE Severity(
+    Severity          text,
+    Value              int
+);
+
+INSERT INTO Severity VALUES 
+            ('Blocker',1),
+            ('Critical',2),
+            ('Major',3),
+            ('Normal',4),
+            ('Minor',5),
+            ('Not in Use',6);
+
+DROP TABLE IF EXISTS Users;
+CREATE TABLE Users(
+    Id                int,
+    FirstName         text,
+    LastName          text,
+    UpdatedOn         timestamp without time zone,
+    CreatedOn         timestamp without time zone
 );

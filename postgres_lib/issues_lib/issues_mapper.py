@@ -19,7 +19,6 @@ def build_row_dict(guid,resource_dict):
     row_dict['Severity'] = '' if not fnx.is_key_in_dictionary(resource_dict,'severity','narrative') else resource_dict['severity']['narrative']
     row_dict['ReleaseId'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'release','id') else resource_dict['release']['id']
     row_dict['SprintId'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'sprint','id') else resource_dict['sprint']['id']
-    row_dict['SprintStartDate'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'sprint','startDate') else resource_dict['sprint']['startDate']
     row_dict['EffortEstimate'] = '' if not fnx.is_key_in_dictionary(resource_dict,'effortEstimate') else resource_dict['effortEstimate']
     row_dict['EffortRemaining'] = '' if not fnx.is_key_in_dictionary(resource_dict,'effortRemaining') else resource_dict['effortRemaining']
     row_dict['EffortLogged'] = '' if not fnx.is_key_in_dictionary(resource_dict,'effortLogged') else resource_dict['effortLogged']

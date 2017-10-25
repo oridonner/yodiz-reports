@@ -5,7 +5,7 @@ declare
     rec record;
     header boolean := true;
 begin
-    return next '<html><head><style>h1 {color: green;text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}.tdErr {color:red;}.tdOk {color:green;}</style></head><body><h1>Yodiz Report</h1><table>';
+    return next '<html><head><style>h1 {color: green;text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}.tdErr {color:red;}.tdOk {color:green;}</style></head><body><h1></h1><table>';
     for rec in
         execute format($q$
             select row_to_json(q) json_row
@@ -29,3 +29,18 @@ end $BODY$
   ROWS 1000;
 ALTER FUNCTION html_table(text)
   OWNER TO postgres;
+
+DROP FUNCTION IF EXISTS last_month(timestamp without time zone);
+CREATE FUNCTION last_month(timestamp without time zone) RETURNS timestamp without time zone AS $$
+    select $1 - interval '1' month
+$$ LANGUAGE SQL;
+
+DROP FUNCTION IF EXISTS last_month_trunc(timestamp without time zone);
+CREATE FUNCTION last_month_trunc(timestamp without time zone) RETURNS timestamp without time zone AS $$
+    select date_trunc('month',last_month($1))
+$$ LANGUAGE SQL;
+
+DROP FUNCTION IF EXISTS days_trunc(timestamp without time zone);
+CREATE FUNCTION days_trunc(timestamp without time zone) RETURNS interval AS $$
+    select date_trunc('day',$1 - date_trunc('month',$1)) + interval '1' day
+$$ LANGUAGE SQL;

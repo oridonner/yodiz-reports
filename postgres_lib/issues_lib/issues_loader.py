@@ -6,8 +6,8 @@ def feedback_yodiz_issue_postgres():
 def postgres_row_insert(connection ,row_dict):
     postgres_cursor = connection.cursor()
     insert_statement_template = """
-    insert into Issues(Guid,Id,Title,CreatedById,UpdatedOn,UpdatedById,CreatedOn,ResponsibleId,Status,Severity,ReleaseId,SprintId,SprintStartDate,EffortEstimate,EffortRemaining,EffortLogged) 
-    values('{0}',{1},'{2}',{3},'{4}',{5},'{6}',{7},'{8}','{9}',{10},{11},{12},{13},{14},{15});
+    insert into Issues(Guid,Id,Title,CreatedById,UpdatedOn,UpdatedById,CreatedOn,ResponsibleId,Status,Severity,ReleaseId,SprintId,EffortEstimate,EffortRemaining,EffortLogged) 
+    values('{0}',{1},'{2}',{3},'{4}',{5},'{6}',{7},'{8}','{9}',{10},{11},{12},{13},{14});
     """
     insert_statement = insert_statement_template.format(
         row_dict['Guid'], #{0} text
@@ -22,10 +22,9 @@ def postgres_row_insert(connection ,row_dict):
         row_dict['Severity'], #{9} text
         row_dict['ReleaseId'], #{10} int
         row_dict['SprintId'], #{11} int
-        row_dict['SprintStartDate'], #{12} timestamp without time zone
-        row_dict['EffortEstimate'], #{13} real
-        row_dict['EffortRemaining'], #{14} real
-        row_dict['EffortLogged'], #{15} real
+        row_dict['EffortEstimate'], #{12} real
+        row_dict['EffortRemaining'], #{13} real
+        row_dict['EffortLogged'], #{14} real
     ) 
     postgres_cursor.execute(insert_statement)
     connection.commit()
