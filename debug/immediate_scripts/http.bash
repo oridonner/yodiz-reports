@@ -8,3 +8,8 @@ curl -X GET 'https://app.yodiz.com/api/rest/v1/projects' -H 'api-token: v29APgj5
 
 # get users
 curl -X GET 'https://app.yodiz.com/api/rest/v1/projects/4/users' -H 'api-token: v29APgj5S3I6PvjbHu8l2az-IpQtZhe1n2hGDXOAKv4' -H 'api-key: 083c5c49-c1cc-490b-bffa-58b6d457ab57'
+
+
+# get realeses no limit property in query
+
+curl -X GET 'https://app.yodiz.com/api/rest/v1/projects/4/releases?fields=all' -H 'api-token: v29APgj5S3I6PvjbHu8l2az-IpQtZhe1n2hGDXOAKv4' -H 'api-key: 083c5c49-c1cc-490b-bffa-58b6d457ab57'

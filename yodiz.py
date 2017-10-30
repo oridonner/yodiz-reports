@@ -15,6 +15,8 @@ def import_config():
 
 def main():
     config = import_config()
+    print config['postgres']
+    sys.exit(0)
     args = sys.argv
     params = arg_parser.params()
     

@@ -12,6 +12,10 @@ def create_resource_url(resource,fields='all',limit=50,offset=0,api_key=None,api
     resource_url['headers']={}
     resource_url['headers']['api-key'] = api_key
     resource_url['headers']['api-token'] = api_token
+    if resource == 'releases':
+        url = 'https://app.yodiz.com/api/rest/v1/projects/4/releases'
+        query = '?limit={0}&fields={1}&offset={2}'.format(limit,fields,offset)
+        resource_url['url'] = url + query
     if resource == 'issues':
         url = 'https://app.yodiz.com/api/rest/v1/projects/4/issues'
         query = '?limit={0}&fields={1}&offset={2}'.format(limit,fields,offset)
@@ -36,12 +40,17 @@ def get_resource_list(resource,fields='all',limit=50,offset=0,api_key=None,api_t
         resource_list = response.json()[0]
     if resource == 'users':
         resource_list = response.json()
+    if resource == 'releases':
+        resource_list = response.json()
     return resource_list
  
 def get_resource_count(resource,fields='all',limit=1,offset=0,api_key=None,api_token=None):
     url = create_resource_url(resource,fields,limit,offset,api_key,api_token)
+    #print url
     response = requests.get(url['url'],headers= url['headers']) 
+    #print response.json()
     resource_dict = response.json()
+    
     return resource_dict[1]['totalCount']
 
 def load_resource(resource,fields='all',api_key=None,api_token=None,connection=None):
@@ -60,6 +69,9 @@ def load_resource(resource,fields='all',api_key=None,api_token=None,connection=N
             i +=1
             conn.postgres_block_insert(connection = connection,guid = guid, resource=resource,resource_list = resource_list)
     if resource == 'users':
+        resource_list = get_resource_list(resource=resource,api_key=api_key,api_token=api_token)
+        conn.postgres_block_insert(connection = connection,guid = None, resource=resource,resource_list = resource_list)
+    if resource == 'releases':
         resource_list = get_resource_list(resource=resource,api_key=api_key,api_token=api_token)
         conn.postgres_block_insert(connection = connection,guid = None, resource=resource,resource_list = resource_list)
     end_time = datetime.datetime.now()
