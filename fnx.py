@@ -27,5 +27,4 @@ def main():
     #html_table = issues_query.get_total_open_issues(connection)
     #fnx.email_result(html_table)
     #print fnx.postgres_rows_select(connection,'SELECT open_bugs from total_open_bugs;')[0][0]
-if __name__ == "__main__":
     main()

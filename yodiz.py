@@ -15,12 +15,10 @@ def import_config():
 
 def main():
     config = import_config()
-    print config['postgres']
-    sys.exit(0)
     args = sys.argv
     params = arg_parser.params()
     
-    connection = conn.postgres_connect(dbname=config['dbname'],user=config['user'],password=config['password'],host=config['host'],port=config['port'])
+    connection = conn.postgres_connect(dbname=config['postgres']['dbname'],user=config['postgres']['user'],password=config['postgres']['password'],host=config['postgres']['host'],port=config['postgres']['port'])
 
     if args[1] == 'build':
         #print params

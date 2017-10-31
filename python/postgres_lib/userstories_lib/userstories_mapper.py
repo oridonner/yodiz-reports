@@ -16,8 +16,8 @@ def build_row_dict(guid,resource_dict):
     row_dict['Status'] = '' if not fnx.is_key_in_dictionary(resource_dict,'status','narrative') else resource_dict['status']['narrative']
     row_dict['ReleaseId'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'release','id') else resource_dict['release']['id']
     row_dict['SprintId'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'sprint','id') else resource_dict['sprint']['id']
-    row_dict['EffortEstimate'] = '' if not fnx.is_key_in_dictionary(resource_dict,'effortEstimate') else resource_dict['effortEstimate']
-    row_dict['EffortRemaining'] = '' if not fnx.is_key_in_dictionary(resource_dict,'effortRemaining') else resource_dict['effortRemaining']
-    row_dict['EffortLogged'] = '' if not fnx.is_key_in_dictionary(resource_dict,'effortLogged') else resource_dict['effortLogged']
+    row_dict['EffortEstimate'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'effortEstimate') else resource_dict['effortEstimate']
+    row_dict['EffortRemaining'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'effortRemaining') else resource_dict['effortRemaining']
+    row_dict['EffortLogged'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'effortLogged') else resource_dict['effortLogged']
     return row_dict
 
