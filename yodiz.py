@@ -18,7 +18,7 @@ def main():
     args = sys.argv
     params = arg_parser.params()
     
-    connection = conn.postgres_connect(dbname=config['dbname'],user=config['user'],password=config['password'],host=config['host'],port=config['port'])
+    connection = conn.postgres_connect(dbname=config['postgres']['dbname'],user=config['postgres']['user'],password=config['postgres']['password'],host=config['postgres']['host'],port=config['postgres']['port'])
 
     if args[1] == 'build':
         #print params
@@ -34,5 +34,7 @@ def main():
     if args[1] == 'mail':
         if params['issues'] :
             mail.send('issues',params['issues'][0],connection)
+        if params['userstories'] :
+            mail.send('userstories',params['userstories'][0],connection)
 if __name__ == "__main__":
     main()

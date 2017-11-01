@@ -1,17 +1,14 @@
-DROP TABLE IF EXISTS Issues CASCADE;
-CREATE TABLE Issues(
+DROP TABLE IF EXISTS Tasks CASCADE;
+CREATE TABLE Tasks(
     Guid              text,
-    Id                int,
+    TaskId            int,
+    UserStoryId       int,  --inserted by code, not custom api
     Title             text,
     CreatedById       int,
     UpdatedOn         timestamp without time zone,
     UpdatedById       int,
     CreatedOn         timestamp without time zone,
-    ResponsibleId     int, 
     Status            text,
-    Severity          text,
-    ReleaseId         int,
-    SprintId          int,
     EffortEstimate    real,
     EffortRemaining   real,
     EffortLogged      real

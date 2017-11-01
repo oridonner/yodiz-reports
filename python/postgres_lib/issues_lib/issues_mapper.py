@@ -10,6 +10,7 @@ def build_row_dict(guid,resource_dict):
     row_dict['Guid'] = guid
     row_dict['Id'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'id') else resource_dict['id']
     row_dict['Title'] = '' if not fnx.is_key_in_dictionary(resource_dict,'title') else resource_dict['title']
+    row_dict['UserStoryId'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'UserStoryId') else resource_dict['UserStoryId'] #inserted by code
     row_dict['CreatedById'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'createdBy','id') else resource_dict['createdBy']['id']
     row_dict['UpdatedOn'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'updatedOn') else  resource_dict['updatedOn']
     row_dict['UpdatedById'] = 'NULL' if not fnx.is_key_in_dictionary(resource_dict,'updatedBy','id') else  resource_dict['updatedBy']['id']

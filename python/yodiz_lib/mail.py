@@ -20,6 +20,11 @@ messages['issues']['mtd'] = {}
 messages['issues']['mtd']['view'] = 'vw_mtd_vs_pmtd_issues'
 messages['issues']['mtd']['subject'] = 'Bugs closed vs. opened MTD report'
 
+messages['userstories'] = {}
+messages['userstories']['total'] = {}
+messages['userstories']['total']['view'] = 'vw_userstories_tot'
+messages['userstories']['total']['subject'] = 'Userstories total report'
+
 # general send email function
 def email_result(subject, html_table):
     msg = email.mime.Multipart.MIMEMultipart()

@@ -14,3 +14,4 @@ def escape_postgres_string(string):
     return string.replace("'", "''")  
 
 
+
