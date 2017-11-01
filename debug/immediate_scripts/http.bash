@@ -23,3 +23,6 @@ curl -X GET 'https://app.yodiz.com/api/rest/v1/userstories/1464/tasks?fields=all
 
 # get userstories
 curl -X GET 'https://app.yodiz.com/api/rest/v1/projects/4/userstories?limit=1&fields=all&offset=0' -H 'api-token: v29APgj5S3I6PvjbHu8l2az-IpQtZhe1n2hGDXOAKv4' -H 'api-key: 083c5c49-c1cc-490b-bffa-58b6d457ab57'
+
+# get usersory issues
+curl -X GET 'https://app.yodiz.com/api/rest/v1/userstories/1464/issues?fields=all' -H 'api-token: v29APgj5S3I6PvjbHu8l2az-IpQtZhe1n2hGDXOAKv4' -H 'api-key: 083c5c49-c1cc-490b-bffa-58b6d457ab57'

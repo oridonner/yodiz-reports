@@ -25,6 +25,7 @@ def params():
     
     parser_mail = subparsers.add_parser('mail', help="send different alerts to users")
     parser_mail.add_argument("-i", "--issues", nargs = 1,help ="name of resource ")
+    parser_mail.add_argument("-u", "--userstories", nargs = 1,help ="name of resource ")
    # parser_mail.add_argument("-r", "--report", nargs = 1,choices =['user bugs','bugs severity','bugs mtd'],help ="name of report to send")
 
 

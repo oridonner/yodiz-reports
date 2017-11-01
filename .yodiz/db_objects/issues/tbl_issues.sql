@@ -3,6 +3,7 @@ CREATE TABLE Issues(
     Guid              text,
     Id                int,
     Title             text,
+    UserStoryId       int,   -- inserted by code, not from custom api
     CreatedById       int,
     UpdatedOn         timestamp without time zone,
     UpdatedById       int,

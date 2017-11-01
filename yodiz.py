@@ -34,5 +34,7 @@ def main():
     if args[1] == 'mail':
         if params['issues'] :
             mail.send('issues',params['issues'][0],connection)
+        if params['userstories'] :
+            mail.send('userstories',params['userstories'][0],connection)
 if __name__ == "__main__":
     main()

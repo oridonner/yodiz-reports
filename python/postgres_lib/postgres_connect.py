@@ -78,7 +78,9 @@ def postgres_block_insert(connection, guid ,resource,resource_list):
         if resource == 'sprints':
             row_dict = sprints_mapper.build_row_dict(guid = guid,resource_dict = resource_dict)
             sprints_loader.postgres_row_insert(connection ,row_dict)
-            
+def postgres_log_insert(connection,guid,iter,resource,http_message):
+    
+    pass    
 
 def create_table_objects(connection,table_name):
     cur = connection.cursor()
@@ -87,4 +89,10 @@ def create_table_objects(connection,table_name):
     print file_path
     cur.execute(open(file_path,'r').read())
     print cur.query
+    connection.commit()
+
+def update_userstory_issue(connection,issue_id,userstory_id):
+    cur = connection.cursor()
+    statement = 'update issues set userstoryid = {0} where id = {1}'.format(userstory_id,issue_id)
+    cur.execute(statement)
     connection.commit()

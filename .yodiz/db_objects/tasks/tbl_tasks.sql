@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS Tasks CASCADE;
 CREATE TABLE Tasks(
     Guid              text,
     TaskId            int,
-    UserStoryId       int,
+    UserStoryId       int,  --inserted by code, not custom api
     Title             text,
     CreatedById       int,
     UpdatedOn         timestamp without time zone,
