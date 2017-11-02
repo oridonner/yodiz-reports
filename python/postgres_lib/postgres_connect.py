@@ -1,5 +1,6 @@
 import psycopg2
 import subprocess
+import operator
 import json
 import os
 from issues_lib import issues_mapper
@@ -19,6 +20,29 @@ def postgres_connect(dbname,user,password,host,port):
     connection_string = "dbname={0} user={1} password={2} host={3} port={4}".format(dbname,user,password,host,port)
     connection = psycopg2.connect(connection_string)
     return connection
+
+# outputs table columns by order
+def get_table_culomns(connection,table_name):
+    statement = """
+        SELECT column_name,ordinal_position
+        FROM information_schema.columns
+        WHERE table_name   = '{0}'
+    """.format(table_name)
+    cur = connection.cursor()
+    cur.execute(statement)
+    connection.commit()    
+    fields = cur.fetchall()
+    # insert imported data into dict {ordinal_position:column_name}
+    fileds_dict = {}
+    for field in fields:
+        fileds_dict[field[1]]=field[0]   
+    # sort imported columns by ordinal position
+    fileds_dict_sorted = sorted(fileds_dict.items(), key=operator.itemgetter(0))
+    fields_list=[]
+    # get only column names
+    for field in fileds_dict_sorted:
+        fields_list.append(field[1])
+    return fields_list
 
 # this function returns rows from postgres db 
 def postgres_rows_select(connection , statement):
