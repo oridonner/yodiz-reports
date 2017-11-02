@@ -58,17 +58,18 @@ def send(resource,query,connection,messages=messages):
     html_table = build_message(connection,statement)
     email_result(messages[resource][query]['subject'],html_table)
 
+def set_status_color(status):
+    return {
+        'In Progress': "Yellow",
+        'Done': "Green",
+        'Blocked': "Red"
+    }.get(status)
+
 
 def sprints_to_html_table(sprint_title , report_headers,report_data):
-    html = """
-    <html>
-        <head>
-            <style>h1 {color: green;text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}.tdErr {color:red;}.tdOk {color:green;}</style>
-        </head>
-        <body>
-            <h1></h1>
-            <table>
-    """ 
+    html = '<html><head><style>h1 {color: green;text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}.tdErr {color:red;}.tdOk {color:green;}</style></head><body><h1></h1><table>'
+
+    #build table headers
     html_headers = "<tr>"
     for header in report_headers:
         html_headers += "<th>{}</th>".format(header)
@@ -76,21 +77,19 @@ def sprints_to_html_table(sprint_title , report_headers,report_data):
 
     html += html_headers
    
-
-    html_data =""
+    #build data
     for row in report_data:
-        html_data += "<tr>"
+        set_color = set_status_color(row[10])
+        if set_color is not None:
+            html_data = '<tr bgcolor="{0}">'.format(set_color)
+        else:
+            html_data = '<tr>'
         for field in row:
             html_data += "<td>{}</td>".format(field)
         html_data += "</tr>"
-    
-    html += html_data
+        html += html_data
 
-    html += """
-            </table>
-        </body>
-    </html>
-    """
+    html += '</table></body></html>'
     return html
     
 

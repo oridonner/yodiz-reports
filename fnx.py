@@ -17,6 +17,13 @@ def import_config():
         config = yaml.safe_load(config_file)
     return config
 
+def set_status_color(status):
+    return {
+        'In Progress': "Yellow",
+        'Done': "Green",
+        'Blocked': "Red"
+    }.get(status)
+
 def main():
 
     config = import_config()
@@ -25,7 +32,7 @@ def main():
     statement = 'select * from vw_userstories_tot'
     row_list = conn.postgres_rows_select(connection, statement)
     html = mail.sprints_to_html_table('test',fields_list,row_list)
-    print html
+    #print html
     # html = """
     # <html>
     #     <head>
@@ -43,21 +50,27 @@ def main():
     # html += html_headers
    
 
-    # html_data =""
+    # #html_data =""
     # for row in row_list:
-    #     html_data += "<tr>"
+    #     print row
+    #     set_color = set_status_color(row[10])
+    #     if set_color is not None:
+    #         html_data = '<tr bgcolor="{0}">'.format(set_color)
+    #     else:
+    #         html_data = '<tr>'
+        
     #     for field in row:
     #         html_data += "<td>{}</td>".format(field)
     #     html_data += "</tr>"
     
-    # html += html_data
+    #     html += html_data
 
     # html += """
     #         </table>
     #     </body>
     # </html>
     # """
-    # print html
+    print html
     
 if __name__ == "__main__":
     main()
