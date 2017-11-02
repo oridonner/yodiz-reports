@@ -31,10 +31,9 @@ def email_result(subject, html_table):
     body = email.mime.Text.MIMEText(html_table , 'html')
     msg.attach(body)
     msg['From']    = 'zbabira@sqreamtech.com'
-    #msg['To'] = 'orid@sqreamtech.com;'# yuval@sqreamtech.com'
-    msg['To'] = 'yuval@sqreamtech.com'
+    msg['To'] = 'orid@sqreamtech.com'
     msg['Subject'] = subject
-    recips = 'yuval@sqreamtech.com'
+    recips = 'orid@sqreamtech.com'
     server = smtplib.SMTP('smtp.gmail.com')
     server.starttls()
     server.login('zbabira@gmail.com','sqreamzbabira')
@@ -65,18 +64,14 @@ def set_status_color(status):
         'Blocked': "Red"
     }.get(status)
 
-
 def sprints_to_html_table(sprint_title , report_headers,report_data):
     html = '<html><head><style>h1 {color: green;text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}.tdErr {color:red;}.tdOk {color:green;}</style></head><body><h1></h1><table>'
-
     #build table headers
     html_headers = "<tr>"
     for header in report_headers:
         html_headers += "<th>{}</th>".format(header)
     html_headers += "</tr>"
-
     html += html_headers
-   
     #build data
     for row in report_data:
         set_color = set_status_color(row[10])
@@ -88,28 +83,15 @@ def sprints_to_html_table(sprint_title , report_headers,report_data):
             html_data += "<td>{}</td>".format(field)
         html_data += "</tr>"
         html += html_data
-
     html += '</table></body></html>'
     return html
-    
 
-# def data_to_html(data_list):
-
-# def build_report(data):
-#     html = data_to_html(data)
-#     email_report(html)
-
-# def data_to_html(data):
-#     data = color_rows_by_status(data)
-#     data = do_sort(data)
-
-# def color_rows_by_status(data_list):
-#     for line in data_list:
-#         color = get_status_color(status)
-#         row = "<td style='color:{}'".format(color)
-
-# def get_status_color(status):
-#     if status == 'In Progress' then return 'Yellow'
-#     elif status == 'Blocked' then return 'Red'
-#     elif status == 'Done' then return 'Green'
-#     else return None
+def email_sprints(connection,fields_list):
+    statement = 'select * from vw_sprints_headers'
+    sprints_headers = conn.postgres_rows_select(connection , statement)
+    for sprint_header in sprints_headers:
+        statement = "select * from vw_sprints_tot where sprint_title='{0}'".format(sprint_header[0])
+        sprint_data = conn.postgres_rows_select(connection , statement)
+        html = sprints_to_html_table(sprint_header[0],fields_list,sprint_data)
+        subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header[0],sprint_header[4],sprint_header[3])
+        email_result(subject, html)

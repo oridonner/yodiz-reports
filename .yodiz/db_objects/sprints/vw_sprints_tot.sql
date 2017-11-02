@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS vw_userstories_tot CASCADE;
-CREATE VIEW vw_userstories_tot AS
+DROP VIEW IF EXISTS vw_sprints_tot CASCADE;
+CREATE VIEW vw_sprints_tot AS
         WITH total AS 
         (
         SELECT  T1.sprint_id,
@@ -9,7 +9,19 @@ CREATE VIEW vw_userstories_tot AS
                 COALESCE(L1.total_tasks_blocked,0)                                      AS total_tasks_blocked,
                 COALESCE(L1.total_tasks_progress,0)                                     AS total_tasks_progress,
                 COALESCE(L2.total_issues_done,0)  + COALESCE(L1.total_tasks_done,0)     AS tasks_completed,
-                gedit
+                ROUND   (
+                                (
+                                        COALESCE(L2.total_issues_done,0)  
+                                        + 
+                                        COALESCE(L1.total_tasks_done,0)
+                                )  
+                                * 100 / 
+                                (
+                                        L1.total_tasks_usersoty 
+                                        + 
+                                        L2.total_issues_userstory
+                                )
+                        )                                                               AS task_comp_ratio,
                 ROUND   (
                                 COALESCE(L1.total_tasks_estimate,0) 
                                 + 
