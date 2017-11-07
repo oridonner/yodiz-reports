@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.extras import RealDictCursor
 import subprocess
 import operator
 import json
@@ -51,6 +52,19 @@ def postgres_rows_select(connection , statement):
     connection.commit()    
     result = cur.fetchall()
     return result
+
+def get_rows(connection,statement):
+    cur = connection.cursor(cursor_factory=RealDictCursor)
+    cur.execute(statement)
+    result = cur.fetchall()
+    return result
+
+# def postgres_rows_to_dict(connection , statement):
+#     cur = connection.cursor()
+#     cur.execute(statement)
+#     connection.commit()    
+#     result = cur.fetchall()
+#     return result
 
 def execute_statement(connection , statement):
     cur = connection.cursor()
