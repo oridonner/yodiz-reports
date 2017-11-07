@@ -6,6 +6,7 @@ import sys
 import datetime
 import requests
 from python.postgres_lib import postgres_connect as conn
+from python.postgres_lib.sprints_lib import sprints_extractor
 
 def create_resource_url(resource,fields='all',limit=50,offset=0,api_key=None,api_token=None):
     basic_url = 'https://app.yodiz.com/api/rest/v1/projects/4/'
@@ -39,6 +40,7 @@ def get_resource_count(resource,fields='all',limit=1,offset=0,api_key=None,api_t
 
 def load_resource(resource,fields='all',api_key=None,api_token=None,connection=None):
     start_time = datetime.datetime.now()
+
     guid = uuid.uuid4()
     if resource == 'userstories':
         resource_count = get_resource_count(resource=resource,api_key= api_key,api_token= api_token)
@@ -92,6 +94,7 @@ def load_resource(resource,fields='all',api_key=None,api_token=None,connection=N
     if resource in ['users','releases','sprints']:
         resource_list = get_resource_list(resource=resource,api_key=api_key,api_token=api_token)
         conn.postgres_block_insert(connection = connection,guid = guid, resource=resource,resource_list = resource_list)
+
 
     if resource == 'tasks':
         basic_url = 'https://app.yodiz.com/api/rest/v1/userstories/'

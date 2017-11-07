@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS vw_sprints_tot CASCADE;
-CREATE VIEW vw_sprints_tot AS
+DROP VIEW IF EXISTS vw_sprints_sub_tot CASCADE;
+CREATE VIEW vw_sprints_sub_tot AS
         WITH total AS 
         (
         SELECT  T1.sprint_id,
