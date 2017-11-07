@@ -9,19 +9,23 @@ CREATE VIEW vw_sprints_sub_tot AS
                 COALESCE(L1.total_tasks_blocked,0)                                      AS total_tasks_blocked,
                 COALESCE(L1.total_tasks_progress,0)                                     AS total_tasks_progress,
                 COALESCE(L2.total_issues_done,0)  + COALESCE(L1.total_tasks_done,0)     AS tasks_completed,
-                ROUND   (
-                                (
-                                        COALESCE(L2.total_issues_done,0)  
-                                        + 
-                                        COALESCE(L1.total_tasks_done,0)
-                                )  
-                                * 100 / 
-                                (
-                                        L1.total_tasks_usersoty 
-                                        + 
-                                        L2.total_issues_userstory
-                                )
-                        )                                                               AS task_comp_ratio,
+                CASE    WHEN 
+                                L1.total_tasks_usersoty + L2.total_issues_userstory = 0 THEN 0
+                        ELSE
+                                ROUND   (
+                                                (
+                                                        COALESCE(L2.total_issues_done,0)  
+                                                        + 
+                                                        COALESCE(L1.total_tasks_done,0)
+                                                )  
+                                                * 100 / 
+                                                (
+                                                        L1.total_tasks_usersoty 
+                                                        + 
+                                                        L2.total_issues_userstory
+                                                )
+                                        )   
+                END                                                                     AS task_comp_ratio,
                 ROUND   (
                                 COALESCE(L1.total_tasks_estimate,0) 
                                 + 
