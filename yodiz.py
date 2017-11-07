@@ -16,12 +16,7 @@ def import_config():
 
 def main():
     config = import_config()
-    params = arg_parser.params()
-    url_headers={}
-    url_headers['api-key']= params.key
-    url_headers['api-token']= params.token
-    #args = sys.argv
-    
+    params = arg_parser.params()    
     connection = conn.postgres_connect(dbname=config['postgres']['dbname'],user=config['postgres']['user'],password=config['postgres']['password'],host=config['postgres']['host'],port=config['postgres']['port'])
     
     if params.cmd_object == 'build':
@@ -31,6 +26,9 @@ def main():
             conn.create_all_objects(connection,params.show)
     
     if params.cmd_object == 'pull':
+        url_headers={}
+        url_headers['api-key']= params.key
+        url_headers['api-token']= params.token
         table_name = 'EXTR.{0}'.format(params.resource)
         if params.truncate:
             conn.truncate_table(connection,table_name)
