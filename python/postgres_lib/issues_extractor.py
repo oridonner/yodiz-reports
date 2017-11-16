@@ -18,11 +18,6 @@ def get_issues_size(url_headers):
     issues_size = response.json()[1]['totalCount']
     return issues_size
 
-def update_api_log(connection,transact_guid,http_req,response_code):
-    time_stamp = datetime.datetime.now()
-    statement = "insert into api_log(transact_guid,http_req,response_code,time_stamp) values('{0}','{1}',{2},'{3}')".format(transact_guid,http_req,response_code,time_stamp)
-    conn.execute_statement(connection,statement)
-
 # get issues list from yodiz api, by offset
 def get_issues_list_offset(url_headers,offset,connection,transact_guid):
     url = 'https://app.yodiz.com/api/rest/v1/projects/4/issues'
@@ -30,7 +25,7 @@ def get_issues_list_offset(url_headers,offset,connection,transact_guid):
     url += query
     response = requests.get(url,headers=url_headers)
     response_code = response.status_code
-    update_api_log(connection,transact_guid,url,response_code)
+    conn.update_api_log(connection,transact_guid,url,response_code)
     issues_list_partial = response.json()[0]
     return issues_list_partial
 
@@ -98,12 +93,6 @@ def insert_issue_row(connection ,issue_row):
     postgres_cursor.execute(insert_statement)
     connection.commit()
 
-def update_db_log(connection,transact_guid,rows_inserted):
-    table_name = 'issues'
-    time_stamp = datetime.datetime.now()
-    statement = "insert into db_log(transact_guid,table_name,rows_inserted,time_stamp) values('{0}','{1}',{2},'{3}')".format(transact_guid,table_name,rows_inserted,time_stamp)
-    conn.execute_statement(connection,statement)
-
 # insert release rows to create full table
 def insert_issues_table(connection,issues_list,transact_guid):   
     for issue_dict in issues_list:
@@ -116,5 +105,6 @@ def extract(connection,url_headers):
     issues_list = get_issues_list(url_headers,connection,transact_guid)
     insert_issues_table(connection,issues_list,transact_guid)
     rows_inserted = issues_feedback(connection)
-    update_db_log(connection,transact_guid,rows_inserted)
-    print "{0} rows were inserted to 'issues' table".format(rows_inserted)
+    table_name = 'issues'
+    conn.update_db_log(connection,transact_guid,table_name,rows_inserted)
+    print "{0} rows were inserted to {1} table".format(rows_inserted,table_name)
