@@ -12,16 +12,18 @@ def releases_feedback(connection):
     return result[0]['count']
 
 # get sprints list from yodiz api
-def get_releases_list(url_headers):
+def get_releases_list(url_headers,connection,transact_guid):
     url = 'https://app.yodiz.com/api/rest/v1/projects/4/releases?fields=all'
     response = requests.get(url,headers=url_headers)
+    response_code = response.status_code
     releases_list = response.json()
+    conn.update_api_log(connection,transact_guid,url,response_code)
     return releases_list
 
 #inserts data from yodiz api to postgres dict, enters null if value doesn't exist 
-def build_release_row(guid,release_dict):
+def build_release_row(transact_guid,release_dict):
     release_row={}
-    release_row['Guid'] = guid
+    release_row['Guid'] = transact_guid
     release_row['Id'] = 'NULL' if not fnx.is_key_in_dictionary(release_dict,'id') else release_dict['id']
     release_row['Title'] = '' if not fnx.is_key_in_dictionary(release_dict,'title') else release_dict['title']
     release_row['CreatedById'] = 'NULL' if not fnx.is_key_in_dictionary(release_dict,'owner','id') else release_dict['owner']['id']
@@ -55,15 +57,17 @@ def insert_release_row(connection ,release_row):
     connection.commit()
 
 # insert release rows to create full table
-def insert_releases_table(connection,releases_list):
-    guid = uuid.uuid4()
+def insert_releases_table(connection,releases_list,transact_guid):
     for release_dict in releases_list:
-        release_row = build_release_row(guid,release_dict)
+        release_row = build_release_row(transact_guid,release_dict)
         insert_release_row(connection ,release_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers):
-    releases_list = get_releases_list(url_headers)
-    insert_releases_table(connection,releases_list)
-    rows_extracted = releases_feedback(connection)
-    print "{0} rows were inserted to 'releases' table".format(rows_extracted)
+def extract(connection,url_headers,transact_guid):
+    releases_list = get_releases_list(url_headers,connection,transact_guid)
+    insert_releases_table(connection,releases_list,transact_guid)
+    rows_inserted = releases_feedback(connection)
+    table_name = 'releases'
+    action = 'insert'
+    conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
+    print "{0} rows were inserted to 'releases' table".format(rows_inserted)

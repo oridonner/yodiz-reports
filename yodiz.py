@@ -43,7 +43,7 @@ def main():
         if params.resource == 'sprints':
             sprints_extractor.extract(connection,url_headers)
         if params.resource == 'releases':
-            releases_extractor.extract(connection,url_headers)
+            releases_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'users':
             users_extractor.extract(connection,url_headers)
         if params.resource == 'issues':
