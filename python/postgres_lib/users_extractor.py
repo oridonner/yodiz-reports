@@ -12,16 +12,18 @@ def users_feedback(connection):
     return result[0]['count']
 
 # get sprints list from yodiz api
-def get_users_list(url_headers):
+def get_users_list(url_headers,connection,transact_guid):
     url = 'https://app.yodiz.com/api/rest/v1/projects/4/users'
     response = requests.get(url,headers=url_headers)
+    response_code = response.status_code
+    conn.update_api_log(connection,transact_guid,url,response_code)
     users_list = response.json()
     return users_list
 
 #inserts data from yodiz api to postgres dict, enters null if value doesn't exist 
-def build_user_row(guid,users_dict):
+def build_user_row(transact_guid,users_dict):
     users_row={}
-    users_row['Guid'] = guid
+    users_row['Guid'] = transact_guid
     users_row['Id'] = 'NULL' if not fnx.is_key_in_dictionary(users_dict,'id') else users_dict['id']
     users_row['FirstName'] = '' if not fnx.is_key_in_dictionary(users_dict,'firstName') else users_dict['firstName']
     users_row['LastName'] = '' if not fnx.is_key_in_dictionary(users_dict,'lastName') else users_dict['lastName']
@@ -47,18 +49,17 @@ def insert_user_row(connection ,users_row):
     connection.commit()
 
 # insert user rows to create full table
-def insert_users_table(connection,users_list):
-    guid = uuid.uuid4()
+def insert_users_table(connection,users_list,transact_guid):
     for user_dict in users_list:
-        user_row = build_user_row(guid,user_dict)
+        user_row = build_user_row(transact_guid,user_dict)
         insert_user_row(connection ,user_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers):
-    users_list = get_users_list(url_headers)
-    insert_users_table(connection,users_list)
-    rows_extracted = users_feedback(connection)
-    print "{0} rows were inserted to 'users' table".format(rows_extracted)
-
-
-
+def extract(connection,url_headers,transact_guid):
+    users_list = get_users_list(url_headers,connection,transact_guid)
+    insert_users_table(connection,users_list,transact_guid)
+    rows_inserted = users_feedback(connection)
+    table_name = 'users'
+    action = 'insert'
+    conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
+    print "{0} rows were inserted to 'users' table".format(rows_inserted)

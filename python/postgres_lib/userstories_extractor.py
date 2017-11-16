@@ -18,16 +18,18 @@ def get_userstories_size(url_headers):
     return userstories_size
 
 # get userstories list from yodiz api, by offset
-def get_userstories_list_offset(url_headers,offset):
+def get_userstories_list_offset(url_headers,offset,connection,transact_guid):
     url = 'https://app.yodiz.com/api/rest/v1/projects/4/userstories'
     query = '?fields=all&limit=50&offset={0}'.format(offset)
     url += query
     response = requests.get(url,headers=url_headers)
+    response_code = response.status_code
+    conn.update_api_log(connection,transact_guid,url,response_code)
     userstories_list_partial = response.json()[0]
     return userstories_list_partial
 
 # get full userstories list from yodiz api
-def get_userstories_list(url_headers):
+def get_userstories_list(url_headers,connection,transact_guid):
     userstories_list = []
     userstories_size = get_userstories_size(url_headers)
     iterations = divmod(userstories_size,50)[0]
@@ -36,16 +38,16 @@ def get_userstories_list(url_headers):
     i = 0
     while i < iterations:
         offset = i*50
-        userstories_list_offset = get_userstories_list_offset(url_headers,offset)
+        userstories_list_offset = get_userstories_list_offset(url_headers,offset,connection,transact_guid)
         userstories_list += userstories_list_offset
         print 'iteration {0}: imported userstories {1} - {2} from {3}'.format(i,str(offset+1),str((i+1)*50),userstories_size)
         i +=1
     return userstories_list
 
 #inserts data from yodiz api to postgres dict, enters null if value doesn't exist 
-def build_userstory_row(guid,userstory_dict):
+def build_userstory_row(transact_guid,userstory_dict):
     userstory_row={}
-    userstory_row['Guid'] = guid
+    userstory_row['Guid'] = transact_guid
     userstory_row['Id'] = 'NULL' if not fnx.is_key_in_dictionary(userstory_dict,'id') else userstory_dict['id']
     userstory_row['Title'] = '' if not fnx.is_key_in_dictionary(userstory_dict,'title') else userstory_dict['title']
     userstory_row['CreatedById'] = 'NULL' if not fnx.is_key_in_dictionary(userstory_dict,'createdBy','id') else userstory_dict['createdBy']['id']
@@ -87,15 +89,17 @@ def insert_userstory_row(connection ,userstory_row):
     connection.commit()
 
 # insert release rows to create full table
-def insert_userstories_table(connection,userstories_list):
-    guid = uuid.uuid4()
+def insert_userstories_table(connection,userstories_list,transact_guid):
     for userstory_dict in userstories_list:
-        userstory_row = build_userstory_row(guid,userstory_dict)
+        userstory_row = build_userstory_row(transact_guid,userstory_dict)
         insert_userstory_row(connection ,userstory_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers):
-    userstories_list = get_userstories_list(url_headers)
-    insert_userstories_table(connection,userstories_list)
-    rows_extracted = userstories_feedback(connection)
-    print "{0} rows were inserted to 'userstories' table".format(rows_extracted)
+def extract(connection,url_headers,transact_guid):
+    userstories_list = get_userstories_list(url_headers,connection,transact_guid)
+    insert_userstories_table(connection,userstories_list,transact_guid)
+    table_name = 'userstories'
+    action = 'insert'
+    rows_inserted = userstories_feedback(connection)
+    conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
+    print "{0} rows were inserted to 'userstories' table".format(rows_inserted)
