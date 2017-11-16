@@ -33,7 +33,7 @@ def get_issues_list_offset(url_headers,offset,connection,transact_guid):
 def get_issues_list(url_headers,connection,transact_guid):
     issues_list = []
     issues_size = get_issues_size(url_headers)
-    iterations = divmod(issues_size,50)[0]
+    iterations = 2#divmod(issues_size,50)[0]
     if divmod(issues_size,50)[1]>0:
         iterations += 1
     i = 0
@@ -100,11 +100,11 @@ def insert_issues_table(connection,issues_list,transact_guid):
         insert_issue_row(connection ,issue_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers):
-    transact_guid = uuid.uuid4()
+def extract(connection,url_headers,transact_guid):
     issues_list = get_issues_list(url_headers,connection,transact_guid)
     insert_issues_table(connection,issues_list,transact_guid)
     rows_inserted = issues_feedback(connection)
     table_name = 'issues'
-    conn.update_db_log(connection,transact_guid,table_name,rows_inserted)
+    action = 'insert'
+    conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
     print "{0} rows were inserted to {1} table".format(rows_inserted,table_name)

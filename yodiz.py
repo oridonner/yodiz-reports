@@ -2,6 +2,7 @@
 import os 
 import sys
 import yaml
+import uuid
 from python.postgres_lib import postgres_connect as conn
 from python.yodiz_lib import arg_parser
 #from python.yodiz_lib import pull
@@ -20,6 +21,7 @@ def import_config():
     return config
 
 def main():
+
     config = import_config()
     params = arg_parser.params()    
     connection = conn.postgres_connect(dbname=config['postgres']['dbname'],user=config['postgres']['user'],password=config['postgres']['password'],host=config['postgres']['host'],port=config['postgres']['port'])
@@ -31,12 +33,13 @@ def main():
             conn.create_all_objects(connection,params.show)
     
     if params.cmd_object == 'pull':
+        transact_guid = uuid.uuid4()
         url_headers={}
         url_headers['api-key']= params.key
         url_headers['api-token']= params.token
         table_name = params.resource
         if params.truncate:
-            conn.truncate_table(connection,table_name)
+            conn.truncate_table(connection,table_name,transact_guid)
         if params.resource == 'sprints':
             sprints_extractor.extract(connection,url_headers)
         if params.resource == 'releases':
@@ -44,7 +47,7 @@ def main():
         if params.resource == 'users':
             users_extractor.extract(connection,url_headers)
         if params.resource == 'issues':
-            issues_extractor.extract(connection,url_headers)
+            issues_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'userstories':
             userstories_extractor.extract(connection,url_headers)
         if params.resource == 'tasks':

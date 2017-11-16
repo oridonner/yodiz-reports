@@ -52,12 +52,18 @@ def execute_statement(connection , statement):
     connection.commit()    
 
 # this function truncates table in postgres
-def truncate_table(connection, table_name):
+def truncate_table(connection, table_name,transact_guid):
+    statement = 'select count(*) from {0}'.format(table_name)
+    rows_deleted = get_rows(connection,statement)
+    rows_deleted = str(rows_deleted[0]['count'])
     cur = connection.cursor()
     statement = 'truncate table {0}'.format(table_name)
     cur.execute(statement)
-    print cur.query
+    message = '{0} ,{1} rows deleted'.format(cur.query,rows_deleted)
     connection.commit()
+    print message
+    action = 'truncate'
+    update_db_log(connection,transact_guid,table_name,action,rows_deleted)
 
 def drop_table(connection, table_name):
     cur = connection.cursor()
@@ -91,9 +97,9 @@ def update_userstory_issue(connection,issue_id,userstory_id):
     cur.execute(statement)
     connection.commit()
 
-def update_db_log(connection,transact_guid,table_name,rows_inserted):
+def update_db_log(connection,transact_guid,table_name,action,rows_effected):
     time_stamp = datetime.datetime.now()
-    statement = "insert into db_log(transact_guid,table_name,rows_inserted,time_stamp) values('{0}','{1}',{2},'{3}')".format(transact_guid,table_name,rows_inserted,time_stamp)
+    statement = "insert into db_log(transact_guid,table_name,action,rows_effected,time_stamp) values('{0}','{1}','{2}',{3},'{4}')".format(transact_guid,table_name,action,rows_effected,time_stamp)
     execute_statement(connection,statement)
     
 def update_api_log(connection,transact_guid,http_req,response_code):
