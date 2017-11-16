@@ -49,7 +49,7 @@ def main():
         if params.resource == 'issues':
             issues_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'userstories':
-            userstories_extractor.extract(connection,url_headers)
+            userstories_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'tasks':
             tasks_extractor.extract(connection,url_headers,transact_guid)
     
