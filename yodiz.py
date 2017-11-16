@@ -4,9 +4,14 @@ import sys
 import yaml
 from python.postgres_lib import postgres_connect as conn
 from python.yodiz_lib import arg_parser
-from python.yodiz_lib import pull
+#from python.yodiz_lib import pull
 from python.yodiz_lib import mail
-from python.postgres_lib.sprints_lib import sprints_extractor
+from python.postgres_lib import sprints_extractor
+from python.postgres_lib import releases_extractor
+from python.postgres_lib import users_extractor
+from python.postgres_lib import issues_extractor
+from python.postgres_lib import tasks_extractor
+from python.postgres_lib import userstories_extractor
 
 def import_config():
     file_name = '.config'
@@ -29,11 +34,21 @@ def main():
         url_headers={}
         url_headers['api-key']= params.key
         url_headers['api-token']= params.token
-        table_name = 'EXTR.{0}'.format(params.resource)
+        table_name = params.resource
         if params.truncate:
             conn.truncate_table(connection,table_name)
         if params.resource == 'sprints':
             sprints_extractor.extract(connection,url_headers)
+        if params.resource == 'releases':
+            releases_extractor.extract(connection,url_headers)
+        if params.resource == 'users':
+            users_extractor.extract(connection,url_headers)
+        if params.resource == 'issues':
+            issues_extractor.extract(connection,url_headers)
+        if params.resource == 'userstories':
+            userstories_extractor.extract(connection,url_headers)
+        if params.resource == 'tasks':
+            tasks_extractor.extract(connection,url_headers)
     
     if params.cmd_object == 'mail':
         if params.sprints:

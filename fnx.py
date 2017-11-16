@@ -3,15 +3,12 @@ import os
 import sys
 import json
 import yaml
+import uuid
 import datetime
 import operator
-from python.yodiz_lib import pull
-from python.yodiz_lib import mail
-from python.postgres_lib.releases_lib import releases_mapper
-from python.postgres_lib.releases_lib import releases_loader
 from python.postgres_lib import postgres_connect as conn
 from python.yodiz_lib import arg_parser
-
+from python.postgres_lib import issues_extractor as iss
 def import_config():
     file_name = '.config'
     with open(file_name,'r') as config_file:
@@ -26,34 +23,12 @@ def set_status_color(status):
     }.get(status)
 
 def main():
-
+    transact_guid = uuid.uuid4()
     config = import_config()
+    url_headers={}
+    url_headers['api-key']= config['yodiz']['api-key']
+    url_headers['api-token']= config['yodiz']['api-token']
     connection = conn.postgres_connect(dbname=config['postgres']['dbname'],user=config['postgres']['user'],password=config['postgres']['password'],host=config['postgres']['host'],port=config['postgres']['port'])
-<<<<<<< HEAD
-    fields_list = conn.get_table_culomns(connection,'vw_userstories_tot')
-    #statement = 'select * from vw_userstories_tot'
-    #row_list = conn.postgres_rows_select(connection, statement)
-    mail.email_sprints(connection,fields_list)
-=======
-    statement = 'select * from vw_sprints_sub_tot'
-    #print conn.get_rows(connection,statement)
-    #print conn.get_table_culomns(connection,'vw_sprints_sub_tot')
-    result = conn.get_rows(connection , 'select count(*) from sprints')
-    print result[0]['count']
-    #print conn.postgres_rows_select(connection,statement)
-    #print params.issues
-    #print args
-    # if params.cmd_object == 'pull':
-    #     if params.resource:
-    #         print 'yes'
-    # if params.cmd_object == 'mail':
-    #     print params.mailinglist
-    #statement = 'select * from vw_userstories_tot'
-    #row_list = conn.postgres_rows_select(connection, statement)
-    #mail.email_sprints(connection,fields_list)
->>>>>>> master
-    #html = mail.sprints_to_html_table('test',fields_list,row_list)
-
-    
+    iss.extract(connection,url_headers)
 if __name__ == "__main__":
     main()
