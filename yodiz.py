@@ -45,13 +45,13 @@ def main():
         if params.resource == 'releases':
             releases_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'users':
-            users_extractor.extract(connection,url_headers)
+            users_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'issues':
             issues_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'userstories':
             userstories_extractor.extract(connection,url_headers)
         if params.resource == 'tasks':
-            tasks_extractor.extract(connection,url_headers)
+            tasks_extractor.extract(connection,url_headers,transact_guid)
     
     if params.cmd_object == 'mail':
         if params.sprints:

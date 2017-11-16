@@ -11,7 +11,7 @@ def tasks_feedback(connection):
     return result[0]['count']
 
 # get userstory tasks list from yodiz api
-def get_userstory_tasks_list(url_headers,userstory_id):
+def get_userstory_tasks_list(url_headers,userstory_id,connection,transact_guid):
     userstory_tasks_list = {}
     url = 'https://app.yodiz.com/api/rest/v1/userstories/' 
     url += str(userstory_id) + '/tasks?fields=all'
@@ -29,6 +29,8 @@ def get_userstory_tasks_list(url_headers,userstory_id):
         print errh
         message = response.json()['message'] + ' id {0}'.format(userstory_id)
     print message
+    response_code = response.status_code
+    conn.update_api_log(connection,transact_guid,url,response_code)
     return userstory_tasks_list
 
 #get active userstories id's from postgres
@@ -38,18 +40,18 @@ def get_userstories_ids(connection):
     return userstories_ids
 
 # gather all tasks to one list
-def get_tasks_list(connection,url_headers):
+def get_tasks_list(url_headers,connection,transact_guid):
     tasks_list = []
     userstories_ids = get_userstories_ids(connection)
     for userstory_id in userstories_ids:
-        userstory_tasks_list = get_userstory_tasks_list(url_headers,userstory_id['userstory_id'])
+        userstory_tasks_list = get_userstory_tasks_list(url_headers,userstory_id['userstory_id'],connection,transact_guid)
         tasks_list += userstory_tasks_list
     return tasks_list
 
 #inserts data from yodiz api to postgres dict, enters null if value doesn't exist 
-def build_task_row(guid,task_dict):
+def build_task_row(transact_guid,task_dict):
     task_row={}
-    task_row['Guid'] = guid
+    task_row['Guid'] = transact_guid
     task_row['TaskId'] = 'NULL' if not fnx.is_key_in_dictionary(task_dict,'id') else task_dict['id']
     task_row['UserStoryId'] = 'NULL' if not fnx.is_key_in_dictionary(task_dict,'id') else task_dict['UserStoryId'] # inserted from code
     task_row['Title'] = '' if not fnx.is_key_in_dictionary(task_dict,'title') else task_dict['title']
@@ -87,15 +89,17 @@ def insert_task_row(connection ,task_row):
     connection.commit()
 
 # insert release rows to create full table
-def insert_tasks_table(connection,tasks_list):
-    guid = uuid.uuid4()
+def insert_tasks_table(connection,tasks_list,transact_guid):
     for task_dict in tasks_list:
-        task_row = build_task_row(guid,task_dict)
+        task_row = build_task_row(transact_guid,task_dict)
         insert_task_row(connection ,task_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers):
-    tasks_list = get_tasks_list(connection,url_headers)
-    insert_tasks_table(connection,tasks_list)
-    rows_extracted = tasks_feedback(connection)
-    print "{0} rows were inserted to 'tasks' table".format(rows_extracted)
+def extract(connection,url_headers,transact_guid):
+    tasks_list = get_tasks_list(url_headers,connection,transact_guid)
+    insert_tasks_table(connection,tasks_list,transact_guid)
+    rows_inserted = tasks_feedback(connection)
+    table_name = 'tasks'
+    action = 'insert'
+    conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
+    print "{0} rows were inserted to 'tasks' table".format(rows_inserted)
