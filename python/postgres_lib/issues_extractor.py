@@ -33,7 +33,7 @@ def get_issues_list_offset(url_headers,offset,connection,transact_guid):
 def get_issues_list(url_headers,connection,transact_guid):
     issues_list = []
     issues_size = get_issues_size(url_headers)
-    iterations = 2#divmod(issues_size,50)[0]
+    iterations = divmod(issues_size,50)[0]
     if divmod(issues_size,50)[1]>0:
         iterations += 1
     i = 0

@@ -41,7 +41,7 @@ def main():
         if params.truncate:
             conn.truncate_table(connection,table_name,transact_guid)
         if params.resource == 'sprints':
-            sprints_extractor.extract(connection,url_headers)
+            sprints_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'releases':
             releases_extractor.extract(connection,url_headers,transact_guid)
         if params.resource == 'users':
