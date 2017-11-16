@@ -1,11 +1,11 @@
 import sys
 import email
 import smtplib
+from itertools import chain
 #from python.general_lib import fnx
 from python.postgres_lib import postgres_connect as conn
 # psql named views are located in spcripts folder
 # {"resource": "query":"postgres named vdiew"}
-
 
 def get_report_view(report):
     reports={}
@@ -14,24 +14,47 @@ def get_report_view(report):
     return reports[report]
 
 # general send email function
-def email_result(subject, html_table,recips):
+def send_email(subject, html_table,to,cc=None):
+    recips = cc + to
     msg = email.mime.Multipart.MIMEMultipart()
-    body = email.mime.Text.MIMEText(html_table , 'html')
-    msg.attach(body)
-    msg['From']    = 'zbabira@sqreamtech.com'
-    msg['To'] = 'orid@sqreamtech.com'
-    msg['Subject'] = subject
-    server = smtplib.SMTP('smtp.gmail.com')
-    server.starttls()
-    server.login('zbabira@gmail.com','sqreamzbabira')
-    server.sendmail('no-reply@sqreamtech.com', recips, msg.as_string())
-    server.quit()
+    body = email.mime.Text.MIMEText(html_table ,'html')
+    for recip in recips:
+        to = ','.join(recip)
+        msg.attach(body)
+        msg['From']    = 'zbabira@sqreamtech.com'
+        msg['To'] = to
+        msg['Subject'] = subject
+        server = smtplib.SMTP('smtp.gmail.com')
+        server.starttls()
+        server.login('zbabira@gmail.com','sqreamzbabira')
+        server.sendmail('no-reply@sqreamtech.com', recip, msg.as_string())
+        server.quit()
+        message = "email {0} successfully sent to: {1} cc: {2}".format(subject,to,cc)
+        print message
 
-def send(connection,report):
-    view = get_report_view(report)
-    html_table = report_to_html_table(connection,report)
-    print html_table
-    #email_result(messages[resource][query]['subject'],html_table)
+# # general send email function
+# def send_email(subject, html_table,to,cc=None):
+#     msg = email.mime.Multipart.MIMEMultipart()
+#     body = email.mime.Text.MIMEText(html_table ,'html')
+#     recips = cc + to
+#     if cc is not None:
+#         cc = ','.join(cc)
+#     else:
+#         cc = ''
+#     to = ','.join(to)
+#     msg.attach(body)
+#     msg['From']    = 'zbabira@sqreamtech.com'
+#     msg['To'] = to
+#     msg['Subject'] = subject
+#     msg['Cc'] = cc
+#     print recips
+#     server = smtplib.SMTP('smtp.gmail.com')
+#     server.starttls()
+#     server.login('zbabira@gmail.com','sqreamzbabira')
+#     server.sendmail('no-reply@sqreamtech.com', recips, msg.as_string())
+#     server.quit()
+#     message = "email {0} successfully sent to: {1} cc: {2}".format(subject,to,cc)
+#     print message
 
 def set_status_color(status):
     return {
@@ -39,7 +62,6 @@ def set_status_color(status):
         'Done': "Green",
         'Blocked': "Red"
     }.get(status)
-
 
 def report_to_html_table(report_headers,report_data):
     html = '<html><head><style>h1 {color: green;text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}.tdErr {color:red;}.tdOk {color:green;}</style></head><body><h1></h1><table>'
@@ -63,7 +85,7 @@ def report_to_html_table(report_headers,report_data):
     html += '</table></body></html>'
     return html
 
-def email_sprints(connection,recips):
+def email_sprints(connection,recips=None):
     statement = 'select * from vw_sprints_headers'
     sprints_headers = conn.get_rows(connection , statement)
     for sprint_header in sprints_headers:
@@ -73,4 +95,5 @@ def email_sprints(connection,recips):
         report_headers = conn.get_table_culomns(connection,view)
         html = report_to_html_table(report_headers,report_data)
         subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])
-        email_result(subject, html,recips)
+        to = ['orid@sqreamtech.com','eliy@sqreamtech.com']
+        send_email(subject,html,to=to,cc=recips)

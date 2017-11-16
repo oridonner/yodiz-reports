@@ -1,21 +1,8 @@
 import psycopg2
+import datetime
 from psycopg2.extras import RealDictCursor
-import subprocess
 import operator
-import json
 import os
-from issues_lib import issues_mapper
-from issues_lib import issues_loader
-from userstories_lib import userstories_mapper
-from userstories_lib import userstories_loader
-from tasks_lib import tasks_mapper
-from tasks_lib import tasks_loader
-from users_lib import users_mapper
-from users_lib import users_loader
-from releases_lib import releases_mapper
-from releases_lib import releases_loader
-from sprints_lib import sprints_mapper
-from sprints_lib import sprints_loader
 
 def postgres_connect(dbname,user,password,host,port):
     connection_string = "dbname={0} user={1} password={2} host={3} port={4}".format(dbname,user,password,host,port)
@@ -59,25 +46,24 @@ def get_rows(connection,statement):
     result = cur.fetchall()
     return result
 
-# def postgres_rows_to_dict(connection , statement):
-#     cur = connection.cursor()
-#     cur.execute(statement)
-#     connection.commit()    
-#     result = cur.fetchall()
-#     return result
-
 def execute_statement(connection , statement):
     cur = connection.cursor()
     cur.execute(statement)
     connection.commit()    
 
 # this function truncates table in postgres
-def truncate_table(connection, table_name):
+def truncate_table(connection, table_name,transact_guid):
+    statement = 'select count(*) from {0}'.format(table_name)
+    rows_deleted = get_rows(connection,statement)
+    rows_deleted = str(rows_deleted[0]['count'])
     cur = connection.cursor()
     statement = 'truncate table {0}'.format(table_name)
     cur.execute(statement)
-    print cur.query
+    message = '{0} ,{1} rows deleted'.format(cur.query,rows_deleted)
     connection.commit()
+    print message
+    action = 'truncate'
+    update_db_log(connection,transact_guid,table_name,action,rows_deleted)
 
 def drop_table(connection, table_name):
     cur = connection.cursor()
@@ -96,30 +82,6 @@ def create_table(connection, table_name):
     print cur.query
     connection.commit()
 
-def postgres_block_insert(connection, guid ,resource,resource_list):
-    for resource_dict in resource_list:
-        if resource == 'issues':
-            row_dict = issues_mapper.build_row_dict(guid = guid,resource_dict = resource_dict)
-            issues_loader.postgres_row_insert(connection ,row_dict)
-        if resource == 'userstories':
-            row_dict = userstories_mapper.build_row_dict(guid = guid,resource_dict = resource_dict)
-            userstories_loader.postgres_row_insert(connection ,row_dict)
-        if resource == 'tasks':
-            row_dict = tasks_mapper.build_row_dict(guid = guid,resource_dict = resource_dict)
-            tasks_loader.postgres_row_insert(connection ,row_dict)
-        if resource == 'users':
-            row_dict = users_mapper.build_row_dict(resource_dict = resource_dict)
-            users_loader.postgres_row_insert(connection ,row_dict)
-        if resource == 'releases':
-            row_dict = releases_mapper.build_row_dict(guid = guid,resource_dict = resource_dict)
-            releases_loader.postgres_row_insert(connection ,row_dict)
-        if resource == 'sprints':
-            row_dict = sprints_mapper.build_row_dict(guid = guid,resource_dict = resource_dict)
-            sprints_loader.postgres_row_insert(connection ,row_dict)
-def postgres_log_insert(connection,guid,iter,resource,http_message):
-    
-    pass    
-
 def create_table_objects(connection,table_name):
     cur = connection.cursor()
     file_name = '{0}_builder.sql'.format(table_name)
@@ -134,3 +96,13 @@ def update_userstory_issue(connection,issue_id,userstory_id):
     statement = 'update issues set userstoryid = {0} where id = {1}'.format(userstory_id,issue_id)
     cur.execute(statement)
     connection.commit()
+
+def update_db_log(connection,transact_guid,table_name,action,rows_effected):
+    time_stamp = datetime.datetime.now()
+    statement = "insert into db_log(transact_guid,table_name,action,rows_effected,time_stamp) values('{0}','{1}','{2}',{3},'{4}')".format(transact_guid,table_name,action,rows_effected,time_stamp)
+    execute_statement(connection,statement)
+    
+def update_api_log(connection,transact_guid,http_req,response_code):
+    time_stamp = datetime.datetime.now()
+    statement = "insert into api_log(transact_guid,http_req,response_code,time_stamp) values('{0}','{1}',{2},'{3}')".format(transact_guid,http_req,response_code,time_stamp)
+    execute_statement(connection,statement)

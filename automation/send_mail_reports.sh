@@ -1,0 +1,1 @@
+./yodiz.py mail --sprints -ls @sprints_mailing_list.txt
