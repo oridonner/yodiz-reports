@@ -86,14 +86,16 @@ def report_to_html_table(report_headers,report_data):
     return html
 
 def email_sprints(connection,recips=None):
-    statement = 'select * from vw_sprints_headers'
-    sprints_headers = conn.get_rows(connection , statement)
-    for sprint_header in sprints_headers:
-        view = get_report_view('sprints')
-        statement = "select * from vw_sprints_sub_tot where sprint_title='{0}'".format(sprint_header['sprint_title'])
-        report_data = conn.postgres_rows_select(connection,statement)
-        report_headers = conn.get_table_culomns(connection,view)
-        html = report_to_html_table(report_headers,report_data)
-        subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])
-        to = ['orid@sqreamtech.com','eliy@sqreamtech.com']
-        send_email(subject,html,to=to,cc=recips)
+    report_rows = get_rows_count(connection, 'vw_sprints_sub_tot')
+    if report_rows > 0:
+        statement = 'select * from vw_sprints_headers'
+        sprints_headers = conn.get_rows(connection , statement)
+        for sprint_header in sprints_headers:
+            view = get_report_view('sprints')
+            statement = "select * from vw_sprints_sub_tot where sprint_title='{0}'".format(sprint_header['sprint_title'])
+            report_data = conn.postgres_rows_select(connection,statement)
+            report_headers = conn.get_table_culomns(connection,view)
+            html = report_to_html_table(report_headers,report_data)
+            subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])
+            to = ['orid@sqreamtech.com','eliy@sqreamtech.com']
+            send_email(subject,html,to=to,cc=recips)

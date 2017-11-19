@@ -46,6 +46,12 @@ def get_rows(connection,statement):
     result = cur.fetchall()
     return result
 
+def get_rows_count(connection, table_name):
+    statement = 'select count(*) from {0}'.format(table_name)
+    rows_count = get_rows(connection,statement)
+    rows_count = str(rows_count[0]['count'])
+    return rows_count
+
 def execute_statement(connection , statement):
     cur = connection.cursor()
     cur.execute(statement)
@@ -53,9 +59,7 @@ def execute_statement(connection , statement):
 
 # this function truncates table in postgres
 def truncate_table(connection, table_name,transact_guid):
-    statement = 'select count(*) from {0}'.format(table_name)
-    rows_deleted = get_rows(connection,statement)
-    rows_deleted = str(rows_deleted[0]['count'])
+    rows_deleted = get_rows_count(connection,table_name)
     cur = connection.cursor()
     statement = 'truncate table {0}'.format(table_name)
     cur.execute(statement)
