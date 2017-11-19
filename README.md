@@ -1,0 +1,2 @@
+This Yodiz version(v0.1.0), imports on daily basis, data from Yodiz through Yodiz API, into Postgres YodizDB.
+Daily sprints summary reports are sent to sprint's conductor, QA & Autumation Manager and R&D Manager.
