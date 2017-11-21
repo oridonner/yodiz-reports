@@ -4,7 +4,8 @@ CREATE VIEW vw_sprints_sub_tot AS
         (
         SELECT  T1.sprint_id,
                 T1.sprint_title,
-                T1.userstory_title ,
+                T1.userstory_id,
+                T1.userstory_title,
                 L1.total_tasks_usersoty + L2.total_issues_userstory                     AS tasks_total,
                 COALESCE(L1.total_tasks_blocked,0)                                      AS total_tasks_blocked,
                 COALESCE(L1.total_tasks_progress,0)                                     AS total_tasks_progress,
@@ -70,22 +71,23 @@ CREATE VIEW vw_sprints_sub_tot AS
         WHERE T1.is_active
         )
         SELECT  sprint_title,
-                userstory_title,
-                tasks_total,
-                tasks_completed,
-                task_comp_ratio || '%' AS task_comp_ratio_per,
-                estimate_total,
-                logged_total,
-                remainig_total,
-                total_tasks_blocked,
-                total_tasks_progress,
+                userstory_id            AS "id",
+                userstory_title         AS "userstory title",
                 case
                      when task_comp_ratio = 100 then 'Done'
                      when total_tasks_progress > 0 or tasks_completed > 0 then 'In Progress'
                      when task_comp_ratio > 0  and task_comp_ratio < 100 and total_tasks_blocked > 0 then 'Blocked'
                      when total_tasks_progress = 0 and tasks_completed = 0 then 'Not Started'
                      else 'err'
-                end as userstory_status
+                end                     AS "status",
+                tasks_total             AS "tasks total",
+                total_tasks_progress    AS "tasks in progress",
+                tasks_completed         AS "tasks completed",
+                task_comp_ratio || '%'  AS "completion ratio",
+                estimate_total          AS "effort estimate",
+                logged_total            AS "effort spent",
+                remainig_total          AS "effort remaining"
         FROM total
         ORDER BY        sprint_title,
+                        4,
                         task_comp_ratio DESC;

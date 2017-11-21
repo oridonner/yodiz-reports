@@ -20,7 +20,6 @@ from python.general_lib import fnx
 def import_config():
     file_path = fnx.get_full_path(__file__)
     file_name = file_path + '.config'
-    print file_name
     with open(file_name,'r') as config_file:
         config = yaml.safe_load(config_file)
     return config

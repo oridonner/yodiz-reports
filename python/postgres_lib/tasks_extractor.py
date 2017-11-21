@@ -1,5 +1,6 @@
 import requests
 import uuid
+import time
 import os
 from python.general_lib import fnx
 from python.postgres_lib import postgres_connect as conn
@@ -46,6 +47,7 @@ def get_tasks_list(url_headers,connection,transact_guid):
     for userstory_id in userstories_ids:
         userstory_tasks_list = get_userstory_tasks_list(url_headers,userstory_id['userstory_id'],connection,transact_guid)
         tasks_list += userstory_tasks_list
+        time.sleep(60)
     return tasks_list
 
 #inserts data from yodiz api to postgres dict, enters null if value doesn't exist 
