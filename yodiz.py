@@ -13,16 +13,22 @@ from python.postgres_lib import users_extractor
 from python.postgres_lib import issues_extractor
 from python.postgres_lib import tasks_extractor
 from python.postgres_lib import userstories_extractor
+from python.general_lib import fnx
+
+
+
 
 def import_config():
-    file_name = '.config'
+    file_path = fnx.get_full_path(__file__)
+    file_name = file_path + '.config'
+    print file_name
     with open(file_name,'r') as config_file:
         config = yaml.safe_load(config_file)
     return config
 
 def main():
-
     config = import_config()
+    sys.exit(0)
     params = arg_parser.params()    
     connection = conn.postgres_connect(dbname=config['postgres']['dbname'],user=config['postgres']['user'],password=config['postgres']['password'],host=config['postgres']['host'],port=config['postgres']['port'])
     
