@@ -5,7 +5,6 @@ import yaml
 import uuid
 from python.postgres_lib import postgres_connect as conn
 from python.yodiz_lib import arg_parser
-#from python.yodiz_lib import pull
 from python.yodiz_lib import mail
 from python.postgres_lib import sprints_extractor
 from python.postgres_lib import releases_extractor
@@ -14,17 +13,11 @@ from python.postgres_lib import issues_extractor
 from python.postgres_lib import tasks_extractor
 from python.postgres_lib import userstories_extractor
 
-def import_config():
-    file_name = '.config'
-    with open(file_name,'r') as config_file:
-        config = yaml.safe_load(config_file)
-    return config
 
 def main():
 
-    config = import_config()
     params = arg_parser.params()    
-    connection = conn.postgres_connect(dbname=config['postgres']['dbname'],user=config['postgres']['user'],password=config['postgres']['password'],host=config['postgres']['host'],port=config['postgres']['port'])
+    connection = conn.postgres_connect(dbname=os.environ['postgres_dbname'],user=os.environ['postgres_user'],password=os.environ['postgres_password'],host=os.environ['postgres_host'],port=os.environ['postgres_port'])
     
     if params.cmd_object == 'build':
         if params.table:
