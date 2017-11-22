@@ -1,5 +1,6 @@
 import requests
 import uuid
+import sys
 import os
 from python.general_lib import fnx
 from python.postgres_lib import postgres_connect as conn
@@ -13,23 +14,18 @@ def issues_feedback(connection):
 # get size of issues tabale from yodiz api
 def get_issues_size(url_headers):
     url = 'https://app.yodiz.com/api/rest/v1/projects/4/issues?fields=all&limit=1&offset=0'
-    response = requests.get(url,headers=url_headers)
-    issues_size = response.json()[1]['totalCount']
+    lst = fnx.get_api_response(url_headers=url_headers,url=url)
+    issues_size = lst[1]['totalCount']
     return issues_size
 
 # get issues list from yodiz api, by offset
-def get_issues_list_offset(url_headers,offset,connection,transact_guid):
-    url = 'https://app.yodiz.com/api/rest/v1/projects/4/issues'
-    query = '?fields=all&limit=50&offset={0}'.format(offset)
-    url += query
-    response = requests.get(url,headers=url_headers)
-    response_code = response.status_code
-    conn.update_api_log(connection,transact_guid,url,response_code)
-    issues_list_partial = response.json()[0]
+def get_issues_list_offset(config,url_headers,offset,transact_guid):
+    url = 'https://app.yodiz.com/api/rest/v1/projects/4/issues?fields=all&limit=50&offset={0}'.format(offset)
+    issues_list_partial = fnx.get_api_response(config,url_headers,url,transact_guid)[0]
     return issues_list_partial
 
 # get full issues list from yodiz api
-def get_issues_list(url_headers,connection,transact_guid):
+def get_issues_list(config,url_headers,transact_guid):
     issues_list = []
     issues_size = get_issues_size(url_headers)
     iterations = divmod(issues_size,50)[0]
@@ -38,7 +34,7 @@ def get_issues_list(url_headers,connection,transact_guid):
     i = 0
     while i < iterations:
         offset = i*50
-        issues_list_offset = get_issues_list_offset(url_headers,offset,connection,transact_guid)
+        issues_list_offset = get_issues_list_offset(config,url_headers,offset,transact_guid)
         issues_list += issues_list_offset
         print 'iteration {0}: imported issues {1} - {2} from {3} into dict.'.format(i,str(offset+1),str((i+1)*50),issues_size)
         i +=1
@@ -99,8 +95,9 @@ def insert_issues_table(connection,issues_list,transact_guid):
         insert_issue_row(connection ,issue_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers,transact_guid):
-    issues_list = get_issues_list(url_headers,connection,transact_guid)
+def extract(config,url_headers,transact_guid):
+    issues_list = get_issues_list(config,url_headers,transact_guid)
+    connection = conn.postgres_connect(config)
     insert_issues_table(connection,issues_list,transact_guid)
     rows_inserted = issues_feedback(connection)
     table_name = 'issues'

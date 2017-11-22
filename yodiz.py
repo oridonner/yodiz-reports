@@ -14,17 +14,10 @@ from python.postgres_lib import tasks_extractor
 from python.postgres_lib import userstories_extractor
 from python.general_lib import fnx
 
-def import_config():
-    file_path = fnx.get_full_path(__file__)
-    file_name = file_path + '.config'
-    with open(file_name,'r') as config_file:
-        config = yaml.safe_load(config_file)
-    return config
-
 def main():
-    config = import_config()
-    params = arg_parser.params()    
-    connection = conn.postgres_connect(dbname=config['postgres']['dbname'],user=config['postgres']['user'],password=config['postgres']['password'],host=config['postgres']['host'],port=config['postgres']['port'])
+    params = arg_parser.params()
+    config = fnx.import_config(__file__)  
+    connection = conn.postgres_connect(config)
     
     if params.cmd_object == 'build':
         if params.table:
@@ -39,17 +32,17 @@ def main():
         url_headers['api-token']= params.token
         table_name = params.resource
         if params.truncate:
-            conn.truncate_table(connection,table_name,transact_guid)
+            conn.truncate_table(config,table_name,transact_guid)
         if params.resource == 'sprints':
-            sprints_extractor.extract(connection,url_headers,transact_guid)
+            sprints_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'releases':
-            releases_extractor.extract(connection,url_headers,transact_guid)
+            releases_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'users':
-            users_extractor.extract(connection,url_headers,transact_guid)
+            users_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'issues':
-            issues_extractor.extract(connection,url_headers,transact_guid)
+            issues_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'userstories':
-            userstories_extractor.extract(connection,url_headers,transact_guid)
+            userstories_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'tasks':
             tasks_extractor.extract(connection,url_headers,transact_guid)
     
