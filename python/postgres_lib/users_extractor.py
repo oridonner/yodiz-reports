@@ -1,6 +1,7 @@
 import requests
 import uuid
 import yaml
+import sys
 import os
 from python.general_lib import fnx
 from python.postgres_lib import postgres_connect as conn
@@ -12,12 +13,9 @@ def users_feedback(connection):
     return result[0]['count']
 
 # get sprints list from yodiz api
-def get_users_list(url_headers,connection,transact_guid):
+def get_users_list(config,url_headers,transact_guid):
     url = 'https://app.yodiz.com/api/rest/v1/projects/4/users'
-    response = requests.get(url,headers=url_headers)
-    response_code = response.status_code
-    conn.update_api_log(connection,transact_guid,url,response_code)
-    users_list = response.json()
+    users_list = fnx.get_api_response(config,url_headers,url,transact_guid)
     return users_list
 
 #inserts data from yodiz api to postgres dict, enters null if value doesn't exist 
@@ -52,11 +50,13 @@ def insert_user_row(connection ,users_row):
 def insert_users_table(connection,users_list,transact_guid):
     for user_dict in users_list:
         user_row = build_user_row(transact_guid,user_dict)
-        insert_user_row(connection ,user_row)
+        insert_user_row(connection,user_row)
+    
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers,transact_guid):
-    users_list = get_users_list(url_headers,connection,transact_guid)
+def extract(config,url_headers,transact_guid):
+    connection = conn.postgres_connect(config)
+    users_list = get_users_list(config,url_headers,transact_guid)
     insert_users_table(connection,users_list,transact_guid)
     rows_inserted = users_feedback(connection)
     table_name = 'users'

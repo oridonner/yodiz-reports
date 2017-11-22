@@ -26,11 +26,11 @@ def send_email(subject, html_table,to,cc=None):
     else:
         cc = ''    
     """
-    #to = ['yuval@sqreamtech.com']
-    #cc = ['orid@sqreamtech.com']
+    to = ['yuval@sqreamtech.com']
+    cc = ['orid@sqreamtech.com']
 
-    to = ['ofers@sqreamtech.com','gilm@sqreamtech.com']
-    cc = ['ben@sqreamtech.com','razi@sqreamtech.com','yuval@sqreamtech.com','orid@sqreamtech.com']
+    #to = ['ofers@sqreamtech.com','gilm@sqreamtech.com']
+    #cc = ['ben@sqreamtech.com','razi@sqreamtech.com','yuval@sqreamtech.com','orid@sqreamtech.com']
     recips = cc + to
 
     msg.attach(body)

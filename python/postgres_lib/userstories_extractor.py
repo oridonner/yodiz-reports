@@ -13,23 +13,18 @@ def userstories_feedback(connection):
 # get size of userstories tabale from yodiz api
 def get_userstories_size(url_headers):
     url = 'https://app.yodiz.com/api/rest/v1/projects/4/userstories?fields=all&limit=1&offset=0'
-    response = requests.get(url,headers=url_headers)
-    userstories_size = response.json()[1]['totalCount']
+    lst = fnx.get_api_response(url_headers=url_headers,url=url)
+    userstories_size = lst[1]['totalCount']
     return userstories_size
 
 # get userstories list from yodiz api, by offset
-def get_userstories_list_offset(url_headers,offset,connection,transact_guid):
-    url = 'https://app.yodiz.com/api/rest/v1/projects/4/userstories'
-    query = '?fields=all&limit=50&offset={0}'.format(offset)
-    url += query
-    response = requests.get(url,headers=url_headers)
-    response_code = response.status_code
-    conn.update_api_log(connection,transact_guid,url,response_code)
-    userstories_list_partial = response.json()[0]
+def get_userstories_list_offset(config,url_headers,offset,transact_guid):
+    url = 'https://app.yodiz.com/api/rest/v1/projects/4/userstories?fields=all&limit=50&offset={0}'.format(offset)
+    userstories_list_partial = fnx.get_api_response(config,url_headers,url,transact_guid)[0]
     return userstories_list_partial
 
 # get full userstories list from yodiz api
-def get_userstories_list(url_headers,connection,transact_guid):
+def get_userstories_list(config,url_headers,transact_guid):
     userstories_list = []
     userstories_size = get_userstories_size(url_headers)
     iterations = divmod(userstories_size,50)[0]
@@ -38,7 +33,7 @@ def get_userstories_list(url_headers,connection,transact_guid):
     i = 0
     while i < iterations:
         offset = i*50
-        userstories_list_offset = get_userstories_list_offset(url_headers,offset,connection,transact_guid)
+        userstories_list_offset = get_userstories_list_offset(config,url_headers,offset,transact_guid)
         userstories_list += userstories_list_offset
         print 'iteration {0}: imported userstories {1} - {2} from {3}'.format(i,str(offset+1),str((i+1)*50),userstories_size)
         i +=1
@@ -95,8 +90,9 @@ def insert_userstories_table(connection,userstories_list,transact_guid):
         insert_userstory_row(connection ,userstory_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers,transact_guid):
-    userstories_list = get_userstories_list(url_headers,connection,transact_guid)
+def extract(config,url_headers,transact_guid):
+    connection = conn.postgres_connect(config)
+    userstories_list = get_userstories_list(config,url_headers,transact_guid)
     insert_userstories_table(connection,userstories_list,transact_guid)
     table_name = 'userstories'
     action = 'insert'

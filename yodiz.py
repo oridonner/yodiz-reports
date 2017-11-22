@@ -35,13 +35,13 @@ def main():
         if params.resource == 'sprints':
             sprints_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'releases':
-            releases_extractor.extract(connection,url_headers,transact_guid)
+            releases_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'users':
-            users_extractor.extract(connection,url_headers,transact_guid)
+            users_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'issues':
             issues_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'userstories':
-            userstories_extractor.extract(connection,url_headers,transact_guid)
+            userstories_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'tasks':
             tasks_extractor.extract(connection,url_headers,transact_guid)
     

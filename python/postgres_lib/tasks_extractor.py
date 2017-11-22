@@ -14,8 +14,7 @@ def tasks_feedback(connection):
 # get userstory tasks list from yodiz api
 def get_userstory_tasks_list(url_headers,userstory_id,connection,transact_guid):
     userstory_tasks_list = {}
-    url = 'https://app.yodiz.com/api/rest/v1/userstories/' 
-    url += str(userstory_id) + '/tasks?fields=all'
+    url = 'https://app.yodiz.com/api/rest/v1/userstories/' + str(userstory_id) + '/tasks?fields=all'
     response = requests.get(url,headers=url_headers)
     try:
         response = requests.get(url,headers= url_headers)
@@ -25,13 +24,13 @@ def get_userstory_tasks_list(url_headers,userstory_id,connection,transact_guid):
             item['UserStoryId'] = userstory_id
         #conn.postgres_block_insert(connection = connection,guid = guid, resource=resource,userstory_tasks_list = userstory_tasks_list)
         #conn.postgres_log_insert(connection=connection,guid=guid,iter=,resource,http_message)
-        message = 'inserting {0} tasks from active UserStory Id {1}'.format(str(len(userstory_tasks_list)),userstory_id)
+        message = 'inserting {0} tasks from active UserStory Id {1} into dict'.format(str(len(userstory_tasks_list)),userstory_id)
     except requests.exceptions.HTTPError as errh:
         print errh
         message = response.json()['message'] + ' id {0}'.format(userstory_id)
     print message
     response_code = response.status_code
-    conn.update_api_log(connection,transact_guid,url,response_code)
+    conn.update_api_log(connection,transact_guid,url,response_code,message)
     return userstory_tasks_list
 
 #get active userstories id's from postgres
