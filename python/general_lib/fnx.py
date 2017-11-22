@@ -30,8 +30,7 @@ def import_config(file):
         config = yaml.safe_load(config_file)
     return config
 
-def get_api_response(config,url_headers,url,transact_guid):
-    db_conn = conn.postgres_connect(config)
+def get_api_response(config=None,url_headers=None,url=None,transact_guid=None):
     response = requests.get(url,headers=url_headers)
     lst = response.json()
     response_code = response.status_code
@@ -40,5 +39,7 @@ def get_api_response(config,url_headers,url,transact_guid):
     else:
         response_text = response.text
         # write to log
-    conn.update_api_log(db_conn,transact_guid,url,response_code,response_text)
+    if config is not None:
+        db_conn = conn.postgres_connect(config)
+        conn.update_api_log(db_conn,transact_guid,url,response_code,response_text)
     return lst

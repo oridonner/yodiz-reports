@@ -47,7 +47,6 @@ def insert_sprint_row(connection ,sprint_row):
         sprint_row['Status'], #{6} text
         sprint_row['StartDate'], #{7} timestamp without time zone
         sprint_row['EndDate'] #{8} timestamp without time zone
-        
     ) 
     postgres_cursor.execute(insert_statement)
     connection.commit()
