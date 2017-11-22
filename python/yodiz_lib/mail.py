@@ -30,7 +30,7 @@ def send_email(subject, html_table,to,cc=None):
     #cc = ['orid@sqreamtech.com']
 
     to = ['ofers@sqreamtech.com','gilm@sqreamtech.com']
-    cc = ['ben@sqreamtech.com','razi@sqreamtech.com','yuval@sqreamtech.com','orid@sqreamtech.com']
+    cc = ['ben@sqreamtech.com','razi@sqreamtech.com','yuval@sqreamtech.com','orid@sqreamtech.com','galit@sqreamtech.com','sivan@sqreamtech.com']
     recips = cc + to
 
     msg.attach(body)
