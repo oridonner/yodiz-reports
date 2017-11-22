@@ -18,18 +18,27 @@ def send_email(subject, html_table,to,cc=None):
     msg = email.mime.Multipart.MIMEMultipart()
     body = email.mime.Text.MIMEText(html_table ,'html')
     # append two lists into one before converting each list to string
-    #recips = cc + to
+    
+    """ old code for utilizing recipients logic
     to = ','.join(to)
     if cc is not None:
         cc = ','.join(cc)
     else:
-        cc = ''
-    recips = ['orid@sqreamtech.com','yuval@sqreamtech.com']
+        cc = ''    
+    """
+    #to = ['yuval@sqreamtech.com']
+    #cc = ['orid@sqreamtech.com']
+
+    to = ['ofers@sqreamtech.com','gilm@sqreamtech.com']
+    cc = ['ben@sqreamtech.com','razi@sqreamtech.com','yuval@sqreamtech.com','orid@sqreamtech.com']
+    recips = cc + to
+
     msg.attach(body)
     msg['From']    = 'zbabira@sqreamtech.com'
-    #msg['To'] = to
-    msg['To'] = ", ".join(recips)
-    #msg['Cc'] = cc
+    msg['To'] = ','.join(to)
+    msg['Cc'] = ','.join(cc)
+    #msg['To'] = ", ".join(recips)
+    
     msg['Subject'] = subject
     server = smtplib.SMTP('smtp.gmail.com')
     server.starttls()
@@ -50,7 +59,7 @@ def set_status_color(status):
 def tot_report_to_html_table(tot_report_headers,tot_report_data):
     html = '<table style="width: 30%">'    
     html_headers = "<tr>"
-    for header in tot_report_headers:
+    for header in tot_report_headers[1:]:
         html_headers += "<th style='text-align: left;padding: 8px;background-color:black;color:white;'>{}</th>".format(header)
     html_headers += "</tr>"
     html += html_headers
@@ -58,7 +67,7 @@ def tot_report_to_html_table(tot_report_headers,tot_report_data):
     for row in tot_report_data:
         html_data = '<tr style="border-style:solid">'
         #set second column id as hyperlink 
-        for field in row:
+        for field in row[1:]:
             html_data += "<td>{}</td>".format(field)
         html_data += "</tr>"
         html += html_data
@@ -90,13 +99,6 @@ def sub_tot_report_to_html_table(sub_tot_report_headers,sub_tot_report_data):
     return html
 
 def report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers,sub_tot_report_data):
-
-    """
-    <table>...</table>
-    <br/><br/>
-    <table>...</table>
-    """
-
     html = '<html><head><style>h1 {color: black; font-weight:bold; text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}</style></head><body><h1>Daily Sprint Report</h1>'
     #build table headers
     tot_report_html_table = tot_report_to_html_table(tot_report_headers,tot_report_data)
