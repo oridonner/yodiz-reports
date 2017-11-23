@@ -14,36 +14,26 @@ from python.postgres_lib import postgres_connect as conn
 #     return reports[report]
 
 # general send email function
-def send_email(subject, html_table,to,cc=None):
+def send_email(subject, html_table,to_list=['orid@sqreamtech.com'],cc_list=['yuval@sqreamtech.com']):
     msg = email.mime.Multipart.MIMEMultipart()
     body = email.mime.Text.MIMEText(html_table ,'html')
     # append two lists into one before converting each list to string
     
-    """ old code for utilizing recipients logic
-    to = ','.join(to)
-    if cc is not None:
-        cc = ','.join(cc)
-    else:
-        cc = ''    
-    """
-    #to = ['yuval@sqreamtech.com']
-    #cc = ['orid@sqreamtech.com']
+    recips_list = cc_list + to_list
 
-    to = ['ofers@sqreamtech.com','gilm@sqreamtech.com']
-    cc = ['ben@sqreamtech.com','razi@sqreamtech.com','yuval@sqreamtech.com','orid@sqreamtech.com']
-    recips = cc + to
+    #to = ['ofers@sqreamtech.com','gilm@sqreamtech.com']
+    #cc = ['ben@sqreamtech.com','razi@sqreamtech.com','yuval@sqreamtech.com','orid@sqreamtech.com','galit@sqreamtech.com','sivan@sqreamtech.com']
 
     msg.attach(body)
     msg['From']    = 'zbabira@sqreamtech.com'
-    msg['To'] = ','.join(to)
-    msg['Cc'] = ','.join(cc)
-    #msg['To'] = ", ".join(recips)
+    msg['To'] = ','.join(to_list)
+    msg['Cc'] = ','.join(cc_list)
     
     msg['Subject'] = subject
     server = smtplib.SMTP('smtp.gmail.com')
     server.starttls()
     server.login('zbabira@gmail.com','sqreamzbabira')
-    server.sendmail('no-reply@sqreamtech.com', recips, msg.as_string())
+    server.sendmail('no-reply@sqreamtech.com', recips_list, msg.as_string())
     server.quit()
     message = "email {0} successfully sent To: {1} Cc: {2}".format(subject,to,cc)
     print message
@@ -109,7 +99,7 @@ def report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers
     html += '</body></html>'
     return html
 
-def email_sprints(connection,recips=None):
+def email_sprints(connection,to_list,cc_list):
     report_rows = conn.get_rows_count(connection, 'vw_sprints_sub_tot')
     if report_rows > 0:
         statement = 'select * from vw_sprints_headers'
@@ -125,6 +115,6 @@ def email_sprints(connection,recips=None):
             #html = report_to_html_table(report_headers,report_data)
             html = report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers,sub_tot_report_data)
             subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])
-            to = []
-            to.append(sprint_header['responsible_email'])
-            send_email(subject,html,to=to,cc=recips)
+            #to = []
+            #to.append(sprint_header['responsible_email'])
+            send_email(subject,html,to_list,cc_list)
