@@ -1,5 +1,6 @@
 .vscode/
 debug/
+temp/
 **/*.pyc
 **/*.py~
 **/*.orig
