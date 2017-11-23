@@ -38,4 +38,5 @@ def params():
     mail_parser.add_argument("-to", "--to-mailing-list", nargs = '+', help = "to mailing list",dest = 'to')
     mail_group = mail_parser.add_mutually_exclusive_group(required = True)
     mail_group.add_argument("--sprints", help="mail sprints summary report",action='store_true')
+    mail_group.add_argument("--tasks", help="mail sprints summary report",action='store_true')
     return parser.parse_args()

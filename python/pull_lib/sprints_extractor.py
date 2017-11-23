@@ -4,7 +4,7 @@ import yaml
 import sys
 import os
 from python.general_lib import fnx
-from python.postgres_lib import postgres_connect as conn
+from python.general_lib import postgres_connect as conn
 
 def sprints_feedbak(connection):
     statement = 'select count(*) from sprints'

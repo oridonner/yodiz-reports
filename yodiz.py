@@ -3,19 +3,20 @@ import os
 import sys
 import yaml
 import uuid
-from python.postgres_lib import postgres_connect as conn
-from python.yodiz_lib import arg_parser
-from python.yodiz_lib import mail
-from python.postgres_lib import sprints_extractor
-from python.postgres_lib import releases_extractor
-from python.postgres_lib import users_extractor
-from python.postgres_lib import issues_extractor
-from python.postgres_lib import tasks_extractor
-from python.postgres_lib import userstories_extractor
+from python.general_lib import postgres_connect as conn
+from python.general_lib import arg_parser as argp
+from python.mail_lib import sprints_mail
+from python.mail_lib import tasks_mail
+from python.pull_lib import sprints_extractor
+from python.pull_lib import releases_extractor
+from python.pull_lib import users_extractor
+from python.pull_lib import issues_extractor
+from python.pull_lib import tasks_extractor
+from python.pull_lib import userstories_extractor
 from python.general_lib import fnx
 
 def main():
-    params = arg_parser.params()
+    params = argp.params()
     config = fnx.import_config(__file__)  
     connection = conn.postgres_connect(config)
     
@@ -48,7 +49,9 @@ def main():
     
     if params.cmd_object == 'mail':
         if params.sprints:
-            mail.email_sprints(connection,params.mailinglist)
+            sprints_mail.send(config,params.to,params.cc)
+        if params.tasks:
+            tasks_mail.send(config)
 
     if params.cmd_object == 'query':
         if params.sprints:

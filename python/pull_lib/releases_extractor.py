@@ -3,7 +3,7 @@ import uuid
 import yaml
 import os
 from python.general_lib import fnx
-from python.postgres_lib import postgres_connect as conn
+from python.general_lib import postgres_connect as conn
 
 # get num of rows inserted to releases table 
 def releases_feedback(connection):

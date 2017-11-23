@@ -2,16 +2,8 @@ import sys
 import email
 import smtplib
 from itertools import chain
-#from python.general_lib import fnx
-from python.postgres_lib import postgres_connect as conn
-# psql named views are located in spcripts folder
-# {"resource": "query":"postgres named vdiew"}
+from python.general_lib import postgres_connect as conn
 
-# def get_report_view(report):
-#     reports={}
-#     reports['sprint tot']= 'vw_sprints_tot'
-#     reports['sprints']= 'vw_sprints_sub_tot'
-#     return reports[report]
 
 # general send email function
 def send_email(subject, html_table,to_list=['orid@sqreamtech.com'],cc_list=['yuval@sqreamtech.com']):
@@ -96,7 +88,8 @@ def report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers
     html += '</body></html>'
     return html
 
-def email_sprints(connection,to_list,cc_list):
+def email_sprints(config,to_list,cc_list):
+    connection = conn.postgres_connect(config)
     report_rows = conn.get_rows_count(connection, 'vw_sprints_sub_tot')
     if report_rows > 0:
         statement = 'select * from vw_sprints_headers'
@@ -115,3 +108,14 @@ def email_sprints(connection,to_list,cc_list):
             to = []
             to.append(sprint_header['responsible_email'])
             send_email(subject,html,to=to,cc=recips)
+
+def email_tasks(config,to_list,cc_list):
+    connection = conn.postgres_connect(config)
+    tasks_header = conn.get_table_culomns(connection,'vw_tasks_user')
+    tasks_data = conn.postgres_rows_select(connection,'select * from vw_tasks_user')
+    html = report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers,sub_tot_report_data)
+    subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])
+    to = []
+    to.append(sprint_header['responsible_email'])
+    send_email(subject,html,to=to,cc=recips)
+    
