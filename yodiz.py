@@ -13,7 +13,6 @@ from python.postgres_lib import issues_extractor
 from python.postgres_lib import tasks_extractor
 from python.postgres_lib import userstories_extractor
 from python.general_lib import fnx
-<<<<<<< HEAD
 
 
 def import_config():
@@ -23,19 +22,6 @@ def import_config():
         config = yaml.safe_load(config_file)
     return config
 
-=======
-
-
-
-
-def import_config():
-    file_path = fnx.get_full_path(__file__)
-    file_name = file_path + '.config'
-    with open(file_name,'r') as config_file:
-        config = yaml.safe_load(config_file)
-    return config
-
->>>>>>> release/v0.1.1-hfx2
 def main():
     config = import_config()
     params = arg_parser.params()    
