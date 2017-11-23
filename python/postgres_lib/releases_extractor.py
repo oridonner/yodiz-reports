@@ -12,12 +12,9 @@ def releases_feedback(connection):
     return result[0]['count']
 
 # get sprints list from yodiz api
-def get_releases_list(url_headers,connection,transact_guid):
+def get_releases_list(config,url_headers,transact_guid):
     url = 'https://app.yodiz.com/api/rest/v1/projects/4/releases?fields=all'
-    response = requests.get(url,headers=url_headers)
-    response_code = response.status_code
-    releases_list = response.json()
-    conn.update_api_log(connection,transact_guid,url,response_code)
+    releases_list = fnx.get_api_response(config,url_headers,url,transact_guid)
     return releases_list
 
 #inserts data from yodiz api to postgres dict, enters null if value doesn't exist 
@@ -63,8 +60,9 @@ def insert_releases_table(connection,releases_list,transact_guid):
         insert_release_row(connection ,release_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers,transact_guid):
-    releases_list = get_releases_list(url_headers,connection,transact_guid)
+def extract(config,url_headers,transact_guid):
+    connection = conn.postgres_connect(config)
+    releases_list = get_releases_list(config,url_headers,transact_guid)
     insert_releases_table(connection,releases_list,transact_guid)
     rows_inserted = releases_feedback(connection)
     table_name = 'releases'

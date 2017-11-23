@@ -4,5 +4,6 @@ CREATE TABLE api_log(
     transact_guid   uuid,
     http_req        TEXT,
     response_code   INT,
+    response_text   TEXT,
     time_stamp      timestamp without time zone
 );

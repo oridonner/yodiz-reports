@@ -2,9 +2,15 @@ import psycopg2
 import datetime
 from psycopg2.extras import RealDictCursor
 import operator
+import sys
 import os
 
-def postgres_connect(dbname,user,password,host,port):
+def postgres_connect(config):
+    dbname = config['postgres']['dbname']
+    user = config['postgres']['user']
+    password = config['postgres']['password']
+    host = config['postgres']['host']
+    port = config['postgres']['port']
     connection_string = "dbname={0} user={1} password={2} host={3} port={4}".format(dbname,user,password,host,port)
     connection = psycopg2.connect(connection_string)
     return connection
@@ -58,7 +64,8 @@ def execute_statement(connection , statement):
     connection.commit()    
 
 # this function truncates table in postgres
-def truncate_table(connection, table_name,transact_guid):
+def truncate_table(config, table_name,transact_guid):
+    connection = postgres_connect(config)
     rows_deleted = get_rows_count(connection,table_name)
     cur = connection.cursor()
     statement = 'truncate table {0}'.format(table_name)
@@ -106,7 +113,7 @@ def update_db_log(connection,transact_guid,table_name,action,rows_effected):
     statement = "insert into db_log(transact_guid,table_name,action,rows_effected,time_stamp) values('{0}','{1}','{2}',{3},'{4}')".format(transact_guid,table_name,action,rows_effected,time_stamp)
     execute_statement(connection,statement)
     
-def update_api_log(connection,transact_guid,http_req,response_code):
+def update_api_log(connection,transact_guid,http_req,response_code,response_text):
     time_stamp = datetime.datetime.now()
-    statement = "insert into api_log(transact_guid,http_req,response_code,time_stamp) values('{0}','{1}',{2},'{3}')".format(transact_guid,http_req,response_code,time_stamp)
+    statement = "insert into api_log(transact_guid,http_req,response_code,response_text,time_stamp) values('{0}','{1}',{2},'{3}','{4}')".format(transact_guid,http_req,response_code,response_text,time_stamp)
     execute_statement(connection,statement)

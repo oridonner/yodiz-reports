@@ -21,9 +21,6 @@ def send_email(subject, html_table,to_list=['orid@sqreamtech.com'],cc_list=['yuv
     
     recips_list = cc_list + to_list
 
-    #to = ['ofers@sqreamtech.com','gilm@sqreamtech.com']
-    #cc = ['ben@sqreamtech.com','razi@sqreamtech.com','yuval@sqreamtech.com','orid@sqreamtech.com','galit@sqreamtech.com','sivan@sqreamtech.com']
-
     msg.attach(body)
     msg['From']    = 'zbabira@sqreamtech.com'
     msg['To'] = ','.join(to_list)
@@ -115,6 +112,6 @@ def email_sprints(connection,to_list,cc_list):
             #html = report_to_html_table(report_headers,report_data)
             html = report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers,sub_tot_report_data)
             subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])
-            #to = []
-            #to.append(sprint_header['responsible_email'])
-            send_email(subject,html,to_list,cc_list)
+            to = []
+            to.append(sprint_header['responsible_email'])
+            send_email(subject,html,to=to,cc=recips)
