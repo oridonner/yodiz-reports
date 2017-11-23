@@ -21,7 +21,7 @@ def report_to_html_table(report_headers,report_data):
     html += html_headers
     #build data
     for row in report_data:
-        set_color = set_status_color(row[7])
+        set_color = set_status_color(row[8])
         if set_color is not None:
             html_data = '<tr bgcolor="{0}" style="border-style:solid">'.format(set_color)
         else:
@@ -41,9 +41,9 @@ def send(config):
     tasks_headers = conn.get_table_culomns(connection,'vw_tasks_user')
     tasks_data = conn.postgres_rows_select(connection,'select * from vw_tasks_user')
     html = report_to_html_table(tasks_headers,tasks_data)
-    subject = "Daily Capacity Report"
-    #to_list = ['orid@sqreamtech.com']
-    #cc_list = ['yuval@sqreamtech.com']
+    subject = "R&D members - Sprint capacity report"
+    to_list = ['razi@sqreamtech.com','ben@sqreamtech.com']
+    cc_list = ['yuval@sqreamtech.com','orid@sqreamtech.com']
     #print html
     fnx.send_email(subject,html,to_list=None,cc_list=None)
     
