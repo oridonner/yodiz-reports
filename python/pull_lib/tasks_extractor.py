@@ -3,7 +3,7 @@ import uuid
 import time
 import os
 from python.general_lib import fnx
-from python.postgres_lib import postgres_connect as conn
+from python.general_lib import postgres_connect as conn
 
 # get num of rows inserted to tasks table 
 def tasks_feedback(connection):
@@ -54,6 +54,7 @@ def build_task_row(transact_guid,task_dict):
     task_row={}
     task_row['Guid'] = transact_guid
     task_row['TaskId'] = 'NULL' if not fnx.is_key_in_dictionary(task_dict,'id') else task_dict['id']
+    task_row['TaskOwnerId'] = 'NULL' if not fnx.is_key_in_dictionary(task_dict,'owner','id') else task_dict['owner']['id']
     task_row['UserStoryId'] = 'NULL' if not fnx.is_key_in_dictionary(task_dict,'id') else task_dict['UserStoryId'] # inserted from code
     task_row['Title'] = '' if not fnx.is_key_in_dictionary(task_dict,'title') else task_dict['title']
     task_row['CreatedById'] = 'NULL' if not fnx.is_key_in_dictionary(task_dict,'createdBy','id') else task_dict['createdBy']['id']
@@ -69,22 +70,23 @@ def build_task_row(transact_guid,task_dict):
 def insert_task_row(connection ,task_row):
     postgres_cursor = connection.cursor()
     insert_statement_template = """
-    insert into Tasks(Guid,TaskId,UserStoryId,Title,CreatedById,UpdatedOn,UpdatedById,CreatedOn,Status,EffortEstimate,EffortRemaining,EffortLogged) 
-    values('{0}',{1},{2},'{3}',{4},'{5}',{6},'{7}','{8}',{9},{10},{11});
+    insert into Tasks(Guid,TaskId,TaskOwnerId,UserStoryId,Title,CreatedById,UpdatedOn,UpdatedById,CreatedOn,Status,EffortEstimate,EffortRemaining,EffortLogged) 
+    values('{0}',{1},{2},{3},'{4}',{5},'{6}',{7},'{8}','{9}',{10},{11},{12});
     """
     insert_statement = insert_statement_template.format(
         task_row['Guid'], #{0} text
         task_row['TaskId'], #{1} int
-        task_row['UserStoryId'], #{2} int
-        fnx.escape_postgres_string(task_row['Title']), #{3} text
-        task_row['CreatedById'], #{4} int
-        task_row['UpdatedOn'], #{5} timestamp without time zone
-        task_row['UpdatedById'], #{6} int
-        task_row['CreatedOn'], #{7} timestamp without time zone
-        task_row['Status'], #{8} text
-        task_row['EffortEstimate'], #{9} real
-        task_row['EffortRemaining'], #{10} real
-        task_row['EffortLogged'], #{11} real
+        task_row['TaskOwnerId'], #{2} int
+        task_row['UserStoryId'], #{3} int
+        fnx.escape_postgres_string(task_row['Title']), #{4} text
+        task_row['CreatedById'], #{5} int
+        task_row['UpdatedOn'], #{6} timestamp without time zone
+        task_row['UpdatedById'], #{7} int
+        task_row['CreatedOn'], #{8} timestamp without time zone
+        task_row['Status'], #{9} text
+        task_row['EffortEstimate'], #{10} real
+        task_row['EffortRemaining'], #{11} real
+        task_row['EffortLogged'], #{12} real
     ) 
     postgres_cursor.execute(insert_statement)
     connection.commit()

@@ -2,7 +2,7 @@ import requests
 import uuid
 import os
 from python.general_lib import fnx
-from python.postgres_lib import postgres_connect as conn
+from python.general_lib import postgres_connect as conn
 
 # get num of rows inserted to userstories table 
 def userstories_feedback(connection):
