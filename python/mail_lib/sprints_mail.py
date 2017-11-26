@@ -66,7 +66,7 @@ def report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers
     return html
 
 #This function is exposed to API
-def send(config,to_list,cc_list):
+def send(config,mailing_list):
     connection = conn.postgres_connect(config)
     report_rows = conn.get_rows_count(connection, 'vw_sprints_sub_tot')
     if report_rows > 0:
@@ -83,6 +83,9 @@ def send(config,to_list,cc_list):
             #html = report_to_html_table(report_headers,report_data)
             html = report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers,sub_tot_report_data)
             subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])
-            #to = []
-            #to.append(sprint_header['responsible_email'])
+            to_list = None
+            cc_list = None
+            if mailing_list:
+                to_list = config['mailing_list']['sprints']['to']
+                cc_list = config['mailing_list']['sprints']['cc']
             fnx.send_email(subject,html,to_list,cc_list)

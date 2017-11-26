@@ -49,9 +49,9 @@ def main():
     
     if params.cmd_object == 'mail':
         if params.sprints:
-            sprints_mail.send(config,params.to,params.cc)
+            sprints_mail.send(config,params.mailing_list)
         if params.tasks:
-            tasks_mail.send(config)
+            tasks_mail.send(config,params.mailing_list)
 
     if params.cmd_object == 'query':
         if params.sprints:

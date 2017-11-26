@@ -36,14 +36,15 @@ def report_to_html_table(report_headers,report_data):
     return html
 
 #This function is exposed to API
-def send(config):
+def send(config,mailing_list):
     connection = conn.postgres_connect(config)
     tasks_headers = conn.get_table_culomns(connection,'vw_tasks_user')
     tasks_data = conn.postgres_rows_select(connection,'select * from vw_tasks_user')
     html = report_to_html_table(tasks_headers,tasks_data)
     subject = "R&D members - Sprint capacity report"
-    to_list = ['razi@sqreamtech.com','ben@sqreamtech.com']
-    cc_list = ['yuval@sqreamtech.com','orid@sqreamtech.com']
-    #print html
-    fnx.send_email(subject,html,to_list=None,cc_list=None)
-    
+    to_list = None
+    cc_list = None
+    if mailing_list:
+        to_list = config['mailing_list']['tasks']['to']
+        cc_list = config['mailing_list']['tasks']['cc']
+    fnx.send_email(subject,html,to_list=to_list,cc_list=cc_list)

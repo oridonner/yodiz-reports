@@ -34,8 +34,9 @@ def params():
 
     # mail positional argument
     mail_parser = subparsers.add_parser('mail', help="send different alerts to users")
-    mail_parser.add_argument("-cc", "--cc-mailing-list", nargs = '+', help = "cc list",dest = 'cc')
-    mail_parser.add_argument("-to", "--to-mailing-list", nargs = '+', help = "to mailing list",dest = 'to')
+# mail_parser.add_argument("-t", "--test", nargs = '+', help = "sends ori and yuval test mail",dest = 'cc')
+#    mail_parser.add_argument("-t1", "--test", nargs = '+', help = "sends ori test mail",dest = 'cc')
+    mail_parser.add_argument("-ls", "--mailing-list",action='store_true',default=False, help = "sends mail to default mailing list")
     mail_group = mail_parser.add_mutually_exclusive_group(required = True)
     mail_group.add_argument("--sprints", help="mail sprints summary report",action='store_true')
     mail_group.add_argument("--tasks", help="mail sprints summary report",action='store_true')
