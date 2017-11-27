@@ -13,6 +13,8 @@ from (
 	select sprint_title,'Sprint Effort Spent' as title , sum("effort spent") as value  , 4 as sort from vw_sprints_sub_tot group by 1,2,4
 		union
 	select sprint_title,'Sprint Effort remaining' as title , sum("effort remaining") as value  , 5 as sort from vw_sprints_sub_tot group by 1,2,4
+		union
+	select sprint_title,'Items Added During Sprint' as title, count(*) as value, 6 as sort from vw_tasks_added group by 1,2,4
 order by 3
 ) a
 ;

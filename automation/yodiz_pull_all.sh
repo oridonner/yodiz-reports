@@ -20,6 +20,7 @@ done
 
 # send e-mail test reports 
 # Production
+/usr/local/sqream-prerequisites/versions/3.04/bin/python /home/sqream/Documents/Yodiz/yodiz.py mail --inv
 /usr/local/sqream-prerequisites/versions/3.04/bin/python /home/sqream/Documents/Yodiz/yodiz.py mail --sprints 
 /usr/local/sqream-prerequisites/versions/3.04/bin/python /home/sqream/Documents/Yodiz/yodiz.py mail --tasks
 # Dev\Test
