@@ -46,12 +46,17 @@ def insert_user_row(connection ,users_row):
     postgres_cursor.execute(insert_statement)
     connection.commit()
 
+
 # insert user rows to create full table
 def insert_users_table(connection,users_list,transact_guid):
     for user_dict in users_list:
         user_row = build_user_row(transact_guid,user_dict)
         insert_user_row(connection,user_row)
-    
+    #set focusfactor
+    statement = "update users set focusfactor = 0.5 where firstname in ('Ben','Ofer','Gil','Yuval')"
+    conn.execute_statement(connection , statement)
+    statement = "update users set focusfactor = 0.75 where firstname not in ('Ben','Ofer','Gil','Yuval')"
+    conn.execute_statement(connection , statement)
 
 # this function is being called by yodiz.py
 def extract(config,url_headers,transact_guid):

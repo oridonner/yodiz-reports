@@ -18,9 +18,10 @@ for yodiz_resource in ${yodiz_resources[@]};do
     sleep 60
 done
 
-# send e-mail reports
+# send e-mail test reports 
 # Production
 /usr/local/sqream-prerequisites/versions/3.04/bin/python /home/sqream/Documents/Yodiz/yodiz.py mail --sprints 
+/usr/local/sqream-prerequisites/versions/3.04/bin/python /home/sqream/Documents/Yodiz/yodiz.py mail --tasks
 # Dev\Test
 #/usr/local/sqream-prerequisites/versions/3.04/bin/python /home/orid/Documents/projects/yodiz_new/yodiz.py mail --sprints 
 

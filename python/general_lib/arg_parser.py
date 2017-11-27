@@ -40,4 +40,5 @@ def params():
     mail_group = mail_parser.add_mutually_exclusive_group(required = True)
     mail_group.add_argument("--sprints", help="mail sprints summary report",action='store_true')
     mail_group.add_argument("--tasks", help="mail sprints summary report",action='store_true')
+    mail_group.add_argument("--inv", help="mail inventory summary report",action='store_true')
     return parser.parse_args()
