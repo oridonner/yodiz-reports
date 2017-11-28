@@ -67,5 +67,6 @@ def extract(config,url_headers,transact_guid):
     rows_inserted = releases_feedback(connection)
     table_name = 'releases'
     action = 'insert'
+    database = config['postgres']['dbname']
     conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
-    print "{0} rows were inserted to 'releases' table".format(rows_inserted)
+    print "{0} rows were inserted to 'releases' table in {1} database".format(rows_inserted,database)

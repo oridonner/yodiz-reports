@@ -98,11 +98,13 @@ def insert_tasks_table(connection,tasks_list,transact_guid):
         insert_task_row(connection ,task_row)
 
 # this function is being called by yodiz.py
-def extract(connection,url_headers,transact_guid):
+def extract(config,url_headers,transact_guid):
+    connection = conn.postgres_connect(config)
     tasks_list = get_tasks_list(url_headers,connection,transact_guid)
     insert_tasks_table(connection,tasks_list,transact_guid)
     rows_inserted = tasks_feedback(connection)
     table_name = 'tasks'
     action = 'insert'
+    database = config['postgres']['dbname']
     conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
-    print "{0} rows were inserted to 'tasks' table".format(rows_inserted)
+    print "{0} rows were inserted to 'tasks' table in {1} database".format(rows_inserted,database)

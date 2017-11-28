@@ -96,6 +96,7 @@ def extract(config,url_headers,transact_guid):
     insert_userstories_table(connection,userstories_list,transact_guid)
     table_name = 'userstories'
     action = 'insert'
+    database = config['postgres']['dbname']
     rows_inserted = userstories_feedback(connection)
     conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
-    print "{0} rows were inserted to 'userstories' table".format(rows_inserted)
+    print "{0} rows were inserted to 'userstories' table in {1} database".format(rows_inserted,database)

@@ -24,7 +24,7 @@ def tot_report_to_html_table(tot_report_headers,tot_report_data):
         html_data = '<tr style="border-style:solid">'
         #set second column id as hyperlink 
         for field in row[1:]:
-            html_data += "<td>{}</td>".format(field)
+            html_data += "<td  style='padding:5px'>{}</td>".format(field)
         html_data += "</tr>"
         html += html_data
     html += '</table>'
@@ -46,9 +46,9 @@ def sub_tot_report_to_html_table(sub_tot_report_headers,sub_tot_report_data):
             html_data = '<tr style="border-style:solid">'
         #set second column id as hyperlink 
         link = 'https://app.yodiz.com/plan/pages/board.vz?cid=21431#/app/us-{0}'.format(row[1])
-        html_data += "<td><a href='{0}' target='_blank'>{1}</a></td>".format(link,row[1])
+        html_data += "<td style='padding:5px'><a href='{0}' target='_blank'>{1}</a></td>".format(link,row[1])
         for field in row[2:]:
-            html_data += "<td>{}</td>".format(field)
+            html_data += "<td  style='padding:5px'>{}</td>".format(field)
         html_data += "</tr>"
         html += html_data 
     html += '</table>'
@@ -68,18 +68,18 @@ def report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers
 #This function is exposed to API
 def send(config,mailing_list):
     connection = conn.postgres_connect(config)
-    report_rows = conn.get_rows_count(connection, 'vw_sprints_sub_tot')
+    report_rows = conn.get_rows_count(connection, 'vw_sprint_userstories_report')
     if report_rows > 0:
         statement = 'select * from vw_sprints_headers'
         sprints_headers = conn.get_rows(connection , statement)
         for sprint_header in sprints_headers:
             #view = get_report_view('sprints')
-            statement = "select * from vw_sprints_sub_tot where sprint_title='{0}'".format(sprint_header['sprint_title'])
+            statement = "select * from vw_sprint_userstories_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
             sub_tot_report_data = conn.postgres_rows_select(connection,statement)
-            sub_tot_report_headers = conn.get_table_culomns(connection,'vw_sprints_sub_tot')
-            statement = "select * from vw_sprints_tot where sprint_title='{0}'".format(sprint_header['sprint_title'])
+            sub_tot_report_headers = conn.get_table_culomns(connection,'vw_sprint_userstories_report')
+            statement = "select * from vw_sprint_summary_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
             tot_report_data = conn.postgres_rows_select(connection,statement)
-            tot_report_headers = conn.get_table_culomns(connection,'vw_sprints_tot')            
+            tot_report_headers = conn.get_table_culomns(connection,'vw_sprint_summary_report')            
             #html = report_to_html_table(report_headers,report_data)
             html = report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers,sub_tot_report_data)
             subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])

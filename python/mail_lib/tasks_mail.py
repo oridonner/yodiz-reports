@@ -38,8 +38,8 @@ def report_to_html_table(report_headers,report_data):
 #This function is exposed to API
 def send(config,mailing_list):
     connection = conn.postgres_connect(config)
-    tasks_headers = conn.get_table_culomns(connection,'vw_tasks_user')
-    tasks_data = conn.postgres_rows_select(connection,'select * from vw_tasks_user')
+    tasks_headers = conn.get_table_culomns(connection,'vw_capacity_report')
+    tasks_data = conn.postgres_rows_select(connection,'select * from vw_capacity_report')
     html = report_to_html_table(tasks_headers,tasks_data)
     subject = "R&D members - Sprint capacity report"
     to_list = None

@@ -21,7 +21,7 @@ def main():
     params = argp.params()
     config = fnx.import_config(__file__)  
     connection = conn.postgres_connect(config)
-    
+
     if params.cmd_object == 'build':
         if params.table:
             conn.create_table_objects(connection,params.table)
@@ -47,7 +47,7 @@ def main():
         if params.resource == 'userstories':
             userstories_extractor.extract(config,url_headers,transact_guid)
         if params.resource == 'tasks':
-            tasks_extractor.extract(connection,url_headers,transact_guid)
+            tasks_extractor.extract(config,url_headers,transact_guid)
     
     if params.cmd_object == 'mail':
         if params.sprints:

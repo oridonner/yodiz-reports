@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS inventory CASCADE;
 CREATE TABLE inventory (
     object_name     TEXT,
     object_type     TEXT,
@@ -13,5 +13,6 @@ INSERT INTO inventory (
 VALUES 
 ('api_log','table'),('db_log','table'),('issues','table'),('releases','table'),('sprints','table'),('tasks','table'),('userstories','table'),('users','table'),
 ('vw_users','view'),('vw_issues','view'),('vw_releases','view'),('vw_tasks','view'),('vw_sprints','view'),('vw_userstories','view'),
-('vw_sprints_headers','view'),('vw_sprints_sub_tot','view'),('vw_sprints_tot','view'),('vw_tasks_user','view'),('vw_tasks_added','view');
+('vw_sprint_userstories','view'),('vw_sprints_headers','view'),('vw_tasks_tot','view'),('vw_sprint_effort','view'),('vw_capacity','view'),
+('vw_capacity_report','view'),('vw_sprint_userstories_report','view'),('vw_sprint_summary_report','view');
 

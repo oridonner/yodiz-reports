@@ -64,5 +64,6 @@ def extract(config,url_headers,transact_guid):
     rows_inserted = sprints_feedbak(connection)
     table_name = 'sprints'
     action = 'insert'
+    database = config['postgres']['dbname']
     conn.update_db_log(connection,transact_guid,table_name,action,rows_inserted)
-    print "{0} rows were inserted to 'sprints' table".format(rows_inserted)
+    print "{0} rows were inserted to 'sprints' in {1} database table".format(rows_inserted,database)

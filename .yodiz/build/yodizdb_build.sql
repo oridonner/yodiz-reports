@@ -1,4 +1,8 @@
 
+DROP DATABASE IF EXISTS yodizdev;
+CREATE DATABASE yodizdev;
+\c yodizdev
+
 CREATE SCHEMA IF NOT EXISTS EXTR;
 CREATE SCHEMA IF NOT EXISTS TRNS;
 CREATE SCHEMA IF NOT EXISTS LOAD;
@@ -8,39 +12,8 @@ CREATE SCHEMA IF NOT EXISTS YODIZ;
 
 CREATE EXTENSION IF NOT EXISTS tablefunc;
 CREATE EXTENSION IF NOT EXISTS hstore;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-
--- CREATE OR REPLACE FUNCTION html_table(query text)
---   RETURNS SETOF text AS
--- $BODY$
--- declare
---     rec record;
---     header boolean := true;
--- begin
---     return next '<html><head><style>h1 {color: green;text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}.tdErr {color:red;}.tdOk {color:green;}</style></head><body><h1></h1><table>';
---     for rec in
---         execute format($q$
---             select row_to_json(q) json_row
---             from (%s) q
---             $q$, query)
---     loop
---         if header then
---             return query select
---                 format ('<tr><th>%s</th></tr>', string_agg(key, '</th><th>'))
---             from json_each(rec.json_row);
---             header := false;
---         end if;
---         return query select
---             format ('<tr><td>%s</td></tr>', string_agg(value, '</td><td>'))
---         from json_each_text(rec.json_row);
---     end loop;
---     return next '</table></body></html>';
--- end $BODY$
---   LANGUAGE plpgsql VOLATILE
---   COST 100
---   ROWS 1000;
--- ALTER FUNCTION html_table(text)
---   OWNER TO postgres;
 DROP FUNCTION IF EXISTS last_month(timestamp without time zone);
 CREATE FUNCTION last_month(timestamp without time zone) RETURNS timestamp without time zone AS $$
     select $1 - interval '1' month
@@ -53,6 +26,14 @@ DROP FUNCTION IF EXISTS days_trunc(timestamp without time zone);
 CREATE FUNCTION days_trunc(timestamp without time zone) RETURNS interval AS $$
     select date_trunc('day',$1 - date_trunc('month',$1)) + interval '1' day
 $$ LANGUAGE SQL;
+CREATE OR REPLACE FUNCTION public.table_count(table_name text) 
+RETURNS SETOF RECORD
+LANGUAGE plpgsql
+AS $BODY$
+BEGIN
+    RETURN QUERY EXECUTE 'select count(*) from ' || table_name;
+END
+$BODY$;
 
 
 DROP TABLE IF EXISTS Emails CASCADE;
@@ -79,6 +60,43 @@ INSERT INTO Emails VALUES (41, 'rotem@sqreamtech.com');
 INSERT INTO Emails VALUES (45, 'erez@sqreamtech.com');
 INSERT INTO Emails VALUES (14, 'razi@sqreamtech.com');
 INSERT INTO Emails VALUES (53, 'jeremy@sqreamtech.com');
+
+DROP TABLE IF EXISTS api_log CASCADE;
+CREATE TABLE api_log(
+    api_guid        uuid NOT NULL DEFAULT uuid_generate_v1(),
+    transact_guid   uuid,
+    http_req        TEXT,
+    response_code   INT,
+    response_text   TEXT,
+    time_stamp      timestamp without time zone
+);
+
+DROP TABLE IF EXISTS db_log CASCADE;
+CREATE TABLE db_log(
+    db_guid         uuid NOT NULL DEFAULT uuid_generate_v1(),
+    transact_guid   uuid,
+    table_name      TEXT,
+    action          TEXT,
+    rows_effected   INT,
+    time_stamp      timestamp without time zone
+);
+
+DROP TABLE IF EXISTS inventory;
+CREATE TABLE inventory (
+    object_name     TEXT,
+    object_type     TEXT,
+    is_exist        BOOLEAN,
+    is_empty        BOOLEAN         
+);
+INSERT INTO inventory (
+            object_name,
+            object_type
+)
+VALUES 
+('api_log','table'),('db_log','table'),('issues','table'),('releases','table'),('sprints','table'),('tasks','table'),('userstories','table'),('users','table'),
+('vw_users','view'),('vw_issues','view'),('vw_releases','view'),('vw_tasks','view'),('vw_sprints','view'),('vw_userstories','view'),
+('vw_sprints_headers','view'),('vw_sprints_sub_tot','view'),('vw_sprints_tot','view'),('vw_tasks_user','view'),('vw_tasks_added','view');
+
 
 DROP TABLE IF EXISTS Issues CASCADE;
 CREATE TABLE Issues(
@@ -130,6 +148,7 @@ DROP TABLE IF EXISTS Tasks CASCADE;
 CREATE TABLE Tasks(
     Guid              text,
     TaskId            int,
+    TaskOwnerId       int,
     UserStoryId       int,  --inserted by code, not custom api
     Title             text,
     CreatedById       int,
@@ -142,12 +161,13 @@ CREATE TABLE Tasks(
     EffortLogged      real
 );
 
-DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Users CASCADE;
 CREATE TABLE Users(
     Guid              text,
     Id                int,
     FirstName         text,
     LastName          text,
+    FocusFactor       NUMERIC,
     UpdatedOn         timestamp without time zone,
     CreatedOn         timestamp without time zone
 );
@@ -178,7 +198,8 @@ CREATE VIEW vw_users AS
                 t1.FirstName || ' ' || LastName    AS full_name,
                 t2.email                           AS email,
                 t1.UpdatedOn                       AS updated_on,
-                t1.CreatedOn                       AS created_on
+                t1.CreatedOn                       AS created_on,
+                t1.FocusFactor                     AS focus_factor
         FROM Users              AS t1
         LEFT JOIN Emails        AS t2 ON t2.user_id = t1.Id;
 
@@ -253,12 +274,13 @@ DROP VIEW IF EXISTS vw_tasks CASCADE;
 CREATE VIEW vw_tasks AS
 SELECT  T1.guid,
         T1.taskid       AS task_id,
+        T1.taskownerid  AS task_owner_id,
         T1.userstoryid  AS userstory_id,
         T1.title,
-        T1.createdbyid  AS created_by,
-        T1.updatedon    AS updated_on,
-        T1.updatedbyid  AS updated_by,
-        T1.createdon    AS created_on,
+        T1.createdbyid              AS created_by,
+        CAST(T1.updatedon AS DATE)  AS updated_on,
+        T1.updatedbyid              AS updated_by,
+        CAST(T1.createdon AS DATE)  AS created_on,
         CASE
             WHEN T1.status ~~ '%10%'::text THEN 'new'::text
             WHEN T1.status ~~ '%20%'::text THEN 'in progress'::text
@@ -329,104 +351,34 @@ CREATE VIEW vw_userstories AS
     FROM UserStories    T1
     JOIN vw_sprints     T2 ON T2.sprint_id = T1.SprintId; 
 
--- open mtd , close mtd , open lmtd , close lmtd
-DROP VIEW IF EXISTS vw_issues_mtd;
-CREATE VIEW vw_issues_mtd AS
-SELECT  mtd_category ,
-        opened_current_month,
-        closed_current_month,
-        opened_last_month,
-        closed_last_month
-FROM crosstab 
-('
-    WITH 
-    categories AS (
-        SELECT  issue_id,
-                status,
-                updated_on,
-                created_on,
-                CASE 
-                    WHEN created_on BETWEEN last_month_trunc(current_date) AND last_month(current_date)                         THEN ''opened_last_month''
-                    WHEN status=''Closed'' AND updated_on BETWEEN last_month_trunc(current_date) AND last_month(current_date)    THEN ''closed_last_month''
-                    WHEN created_on>=date_trunc(''month'',current_date)                                                         THEN ''opened_current_month''
-                    WHEN status=''Closed'' AND updated_on>=date_trunc(''month'',current_date)                                   THEN ''closed_current_month''
-                END AS mtd_category
-        FROM vw_issues
-    )
-    SELECT  ''MTD Report'',
-            mtd_category,
-            COUNT(issue_id)::INT AS Ids
-    FROM categories
-    WHERE categories IS NOT NULL
-    GROUP BY 1,2
-    ORDER BY 1,2
-') AS final_results(
-                        mtd_category            TEXT, 
-                        closed_last_month       INT, 
-                        opened_last_month       INT, 
-                        opened_current_month    INT, 
-                        closed_current_month    INT
-                    );
+DROP VIEW IF EXISTS vw_inventory_tot CASCADE;
+CREATE VIEW vw_inventory_tot AS
+SELECT  T1.object_name,
+        T1.object_type,
+        CASE 
+            WHEN L1.table_name IS NULL THEN 'False'
+            ELSE 'True'
+        END AS is_exist,
+        L2.row_count
+FROM inventory AS T1
+LEFT JOIN LATERAL (     
+                    SELECT P1.table_name
+                    FROM information_schema.tables AS P1
+                    WHERE P1.table_name   = T1.object_name AND table_schema='public'
+                ) AS L1 ON TRUE
+LEFT JOIN LATERAL (
+            SELECT row_count 
+            FROM  table_count(T1.object_name) AS t(row_count BIGINT)                            
+) AS L2 ON TRUE;
 
--- Open issues severity pivoted by OpenIssueCategory
-DROP VIEW IF EXISTS vw_open_issues_severity;
-CREATE VIEW vw_open_issues_severity AS
-    SELECT  severity , 
-            open , 
-            in_progress , 
-            approved , 
-            blocked 
-    FROM crosstab
-    ('
-        SELECT  severity, 
-                open_issue_category, 
-                COUNT(issue_id)::int AS ct
-        FROM vw_issues
-        WHERE is_open
-        GROUP BY 1,2 
-        ORDER BY 1,2
-    ') 
-    AS final_results(   
-                        severity    TEXT, 
-                        approved    INT, 
-                        blocked     INT,
-                        in_progress INT, 
-                        open        INT
-                    );
-
--- Bugs per user
-DROP VIEW IF EXISTS vw_issues_user;
-CREATE VIEW vw_issues_user AS
-    SELECT  T2.full_name,
-            COUNT(T1.issue_id) AS issues
-    FROM vw_issues T1
-    JOIN vw_users  T2 ON T1.responsible_id = T2.user_id
-    WHERE T1.is_open 
-    GROUP BY T2.full_name
-    ORDER BY 2 DESC;
-
-
-DROP VIEW IF EXISTS vw_sprints_headers CASCADE;
-CREATE VIEW vw_sprints_headers AS
-SELECT  T1.sprint_id,
-        T1.sprint_title,
-        T2.full_name                            AS responsible,
-        T2.email                                AS responsible_email,
-        T1.start_date,
-        T1.end_date,
-        T1.end_date - T1.start_date +1          AS total_days,
-        current_date - T1.start_date + 1        AS day_number 
-FROM vw_sprints AS T1
-JOIN vw_users   AS T2 ON T2.user_id = T1.created_by_id
-WHERE T1.is_active;
-
-DROP VIEW IF EXISTS vw_sprints_sub_tot CASCADE;
-CREATE VIEW vw_sprints_sub_tot AS
+DROP VIEW IF EXISTS vw_sprint_userstories CASCADE;
+CREATE VIEW vw_sprint_userstories AS
         WITH total AS 
         (
         SELECT  T1.sprint_id,
                 T1.sprint_title,
-                T1.userstory_title ,
+                T1.userstory_id,
+                T1.userstory_title,
                 L1.total_tasks_usersoty + L2.total_issues_userstory                     AS tasks_total,
                 COALESCE(L1.total_tasks_blocked,0)                                      AS total_tasks_blocked,
                 COALESCE(L1.total_tasks_progress,0)                                     AS total_tasks_progress,
@@ -492,23 +444,208 @@ CREATE VIEW vw_sprints_sub_tot AS
         WHERE T1.is_active
         )
         SELECT  sprint_title,
-                userstory_title,
-                tasks_total,
-                tasks_completed,
-                task_comp_ratio || '%' AS task_comp_ratio_per,
-                estimate_total,
-                logged_total,
-                remainig_total,
-                total_tasks_blocked,
-                total_tasks_progress,
+                userstory_id,           
+                userstory_title,        
                 case
                      when task_comp_ratio = 100 then 'Done'
                      when total_tasks_progress > 0 or tasks_completed > 0 then 'In Progress'
                      when task_comp_ratio > 0  and task_comp_ratio < 100 and total_tasks_blocked > 0 then 'Blocked'
                      when total_tasks_progress = 0 and tasks_completed = 0 then 'Not Started'
                      else 'err'
-                end as userstory_status
+                end                     AS "status",
+                tasks_total,             
+                total_tasks_progress,    
+                tasks_completed,         
+                task_comp_ratio, 
+                estimate_total,          
+                logged_total,            
+                remainig_total          
         FROM total
         ORDER BY        sprint_title,
+                        4,
                         task_comp_ratio DESC;
+
+DROP VIEW IF EXISTS vw_sprints_headers CASCADE;
+CREATE VIEW vw_sprints_headers AS
+SELECT  T1.sprint_id,
+        T1.sprint_title,
+        T2.full_name                            AS responsible,
+        T2.email                                AS responsible_email,
+        T1.start_date,
+        T1.end_date,
+        T1.end_date - T1.start_date +1          AS total_days,
+        current_date - T1.start_date + 1        AS day_number, 
+        T1.end_date - current_date              AS remaining_days
+FROM vw_sprints AS T1
+JOIN vw_users   AS T2 ON T2.user_id = T1.created_by_id
+WHERE T1.is_active;
+
+DROP VIEW IF EXISTS vw_tasks_tot CASCADE;
+CREATE VIEW vw_tasks_tot AS
+SELECT  T1.task_id,
+        T1.created_on   AS task_created_on,
+        T3.sprint_id,
+        T3.sprint_title,
+        T3.start_date   AS sprint_start_date
+FROM vw_tasks       AS T1
+JOIN vw_userstories AS T2 ON T2.userstory_id = T1.userstory_id
+JOIN vw_sprints     AS T3 ON T3.sprint_id = T2.sprint_id;
+
+DROP VIEW IF EXISTS vw_sprint_effort CASCADE;
+CREATE VIEW vw_sprint_effort AS
+WITH effort AS
+(
+        SELECT  sprint_title, 
+                SUM("estimate_total")   AS total_effort_estimate, 
+                SUM("logged_total")     AS total_effort_spent, 
+                SUM("remainig_total")   AS total_effort_remaining
+        FROM vw_sprint_userstories 
+        GROUP BY 1
+)
+SELECT  sprint_title,
+        total_effort_estimate, 
+        total_effort_spent, 
+        total_effort_remaining,
+        round(total_effort_spent*100/total_effort_estimate) AS effort_completion_ratio
+FROM effort;
+
+DROP VIEW IF EXISTS vw_capacity CASCADE;
+CREATE VIEW vw_capacity AS
+        SELECT  T4.sprint_title,
+                T2.full_name,
+                COUNT(T1.task_id)                               AS tot_assigned_tasks,
+                SUM(T1.effort_estimate)                         AS sum_effort_estimate,
+                SUM(T1.effort_logged)                           AS sum_effort_logged,
+                SUM(T1.effort_remaining)                        AS sum_effort_remaining,
+                T5.remaining_days                               AS days_remaining,
+                T5.remaining_days * 8.5 * T2.focus_factor       AS estimated_remaining_capacity
+        FROM vw_tasks           AS T1
+        LEFT JOIN vw_users      AS T2 ON T2.user_id = T1.task_owner_id
+        JOIN vw_userstories     AS T3 ON T3.userstory_id = T1.userstory_id
+        JOIN vw_sprints         AS T4 ON T4.sprint_id = T3.sprint_id
+        JOIN vw_sprints_headers AS T5 ON T5.sprint_id = T4.sprint_id
+        GROUP BY 1,2,7,8;     
+
+
+DROP VIEW IF EXISTS vw_capacity_report CASCADE;
+CREATE VIEW vw_capacity_report AS
+    SELECT  sprint_title                    AS "Sprint Title",
+            full_name                       AS "Full Name",
+            tot_assigned_tasks              AS "#Assigned Tasks",
+            sum_effort_estimate             AS "#Effort Estimate",
+            sum_effort_logged               AS "#Effort Spent",
+            sum_effort_remaining            AS "#Effort Remaining",
+            days_remaining                  AS "Days Remaining", 
+            estimated_remaining_capacity    AS "Estimated Remaining Capacity",
+            CASE 
+                    WHEN  estimated_remaining_capacity < sum_effort_remaining THEN 'RISK' 
+                    ELSE 'OK' 
+            END                             AS "Capacity Allocation"
+    FROM vw_capacity
+    ORDER BY 9 DESC ,1,4 ;
+
+DROP VIEW IF EXISTS vw_sprint_userstories_report CASCADE;
+CREATE VIEW vw_sprint_userstories_report AS
+SELECT  sprint_title,
+        userstory_id            AS "id",
+        userstory_title         AS "userstory title",
+        status                  AS "Status",
+        tasks_total             AS "Tasks Total",
+        total_tasks_progress    AS "tasks in progress",
+        tasks_completed         AS "Tasks Completed",
+        task_comp_ratio || '%'  AS "Tasks Completion Ratio",
+        estimate_total          AS "Effort Estimate",
+        logged_total            AS "Effort Spent",
+        remainig_total          AS "Effort Remaining"
+FROM vw_sprint_userstories
+ORDER BY        sprint_title,
+                4,
+                task_comp_ratio DESC;
+
+DROP VIEW IF EXISTS vw_sprint_summary_report CASCADE;
+CREATE VIEW vw_sprint_summary_report AS
+SELECT  "sprint_title",
+        "Category",
+        "Total",
+        "#Completed",
+        "%Completed"
+FROM    (
+            --tasks opened after sprint started
+            -- with items as
+            -- (
+            --     select T1.sprint_title, count(T1.*) as total_items,L1.items_added
+            --     from vw_tasks_tot as T1
+            --     LEFT JOIN LATERAL   (
+            --                 select P1.sprint_title,count(P1.*) as items_added
+            --                 from vw_tasks_tot P1
+            --                 WHERE P1.task_created_on > P1.sprint_start_date and P1.sprint_title=T1.sprint_title
+            --                 group by 1
+            --     ) AS L1 ON TRUE 
+            --     group by 1,3
+            -- )
+            -- select  sprint_title                AS "sprint_title",
+            --         'Tasks Added During Sprint' AS "Category",
+            --         total_items                 AS "Total",
+            --         items_added                 AS "#Completed",
+            --         total_items - items_added   AS "Remaining",
+            --         4                           AS "Sort",
+            --         round(items_added*100/total_items) || '%' as "%Completed"
+            -- from items
+            -- UNION
+            --days elapsed
+            select  sprint_title                AS "sprint_title",
+                    'Sprint Days'               AS "Category",
+                    total_days                  AS "Total",
+                    day_number                  AS "#Completed",
+                    remaining_days              AS "Remaining",
+                    1                           AS "Sort",
+                    round(day_number*100/total_days) || '%' AS "%Completed"
+            from vw_sprints_headers
+            UNION
+            --effort
+            select  sprint_title                AS "sprint_title",
+                    'Sprint Effort'             AS "Category",
+                    total_effort_estimate       AS "Total",
+                    total_effort_spent          AS "#Completed",
+                    total_effort_remaining      AS "Remaining",
+                    2                           AS "Sort",
+                    effort_completion_ratio || '%' as "%Completed"
+            from vw_sprint_effort
+            UNION
+            --userstories
+            select      sprint_title                 AS "sprint_title",
+                        'Userstories'                       AS "Category",
+                        count(userstory_id)                           AS "Total",
+                        sum(case when "status" = 'Done' then 1 else 0 end)  AS "#Completed",
+                        NULL                                AS "Remaining",
+                        3                                   AS "Sort",
+                        cast(round(cast(sum(case when "status" = 'Done' then 1 else 0 end) as numeric) / cast(count(userstory_id) as numeric) * 100) as text) || '%' AS "%Completed"
+            from vw_sprint_userstories 
+            group by 1
+    order by 6
+    ) AS T;
+/*
+select  sprint_title,
+        Blocked,
+        Not_Started,
+        In_Progress,
+        Done
+from crosstab
+('
+    SELECT  sprint_title,
+            "status",
+            COUNT(id)::INT 
+    FROM vw_sprints_sub_tot 
+    GROUP BY 1,2 
+    ORDER BY 1,2
+')
+as final(
+            sprint_title    TEXT,
+             In_Progress  INT,
+             NotStarted  INT,
+             Done         INT,
+             Blocked      INT
+);
+*/
+
 

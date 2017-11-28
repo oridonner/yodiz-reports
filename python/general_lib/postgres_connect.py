@@ -70,7 +70,8 @@ def truncate_table(config, table_name,transact_guid):
     cur = connection.cursor()
     statement = 'truncate table {0}'.format(table_name)
     cur.execute(statement)
-    message = '{0} ,{1} rows deleted'.format(cur.query,rows_deleted)
+    database = config['postgres']['dbname']
+    message = '{0} ,{1} rows deleted from {2} database'.format(cur.query,rows_deleted,database)
     connection.commit()
     print message
     action = 'truncate'

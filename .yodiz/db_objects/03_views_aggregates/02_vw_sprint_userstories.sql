@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS vw_sprints_sub_tot CASCADE;
-CREATE VIEW vw_sprints_sub_tot AS
+DROP VIEW IF EXISTS vw_sprint_userstories CASCADE;
+CREATE VIEW vw_sprint_userstories AS
         WITH total AS 
         (
         SELECT  T1.sprint_id,
@@ -71,8 +71,8 @@ CREATE VIEW vw_sprints_sub_tot AS
         WHERE T1.is_active
         )
         SELECT  sprint_title,
-                userstory_id            AS "id",
-                userstory_title         AS "userstory title",
+                userstory_id,           
+                userstory_title,        
                 case
                      when task_comp_ratio = 100 then 'Done'
                      when total_tasks_progress > 0 or tasks_completed > 0 then 'In Progress'
@@ -80,13 +80,13 @@ CREATE VIEW vw_sprints_sub_tot AS
                      when total_tasks_progress = 0 and tasks_completed = 0 then 'Not Started'
                      else 'err'
                 end                     AS "status",
-                tasks_total             AS "tasks total",
-                total_tasks_progress    AS "tasks in progress",
-                tasks_completed         AS "tasks completed",
-                task_comp_ratio || '%'  AS "completion ratio",
-                estimate_total          AS "effort estimate",
-                logged_total            AS "effort spent",
-                remainig_total          AS "effort remaining"
+                tasks_total,             
+                total_tasks_progress,    
+                tasks_completed,         
+                task_comp_ratio, 
+                estimate_total,          
+                logged_total,            
+                remainig_total          
         FROM total
         ORDER BY        sprint_title,
                         4,
