@@ -81,7 +81,7 @@ CREATE TABLE db_log(
     time_stamp      timestamp without time zone
 );
 
-DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS inventory CASCADE;
 CREATE TABLE inventory (
     object_name     TEXT,
     object_type     TEXT,
@@ -95,7 +95,8 @@ INSERT INTO inventory (
 VALUES 
 ('api_log','table'),('db_log','table'),('issues','table'),('releases','table'),('sprints','table'),('tasks','table'),('userstories','table'),('users','table'),
 ('vw_users','view'),('vw_issues','view'),('vw_releases','view'),('vw_tasks','view'),('vw_sprints','view'),('vw_userstories','view'),
-('vw_sprints_headers','view'),('vw_sprints_sub_tot','view'),('vw_sprints_tot','view'),('vw_tasks_user','view'),('vw_tasks_added','view');
+('vw_sprint_userstories','view'),('vw_sprints_headers','view'),('vw_tasks_tot','view'),('vw_sprint_effort','view'),('vw_capacity','view'),
+('vw_capacity_report','view'),('vw_sprint_userstories_report','view'),('vw_sprint_summary_report','view');
 
 
 DROP TABLE IF EXISTS Issues CASCADE;
@@ -548,7 +549,7 @@ DROP VIEW IF EXISTS vw_sprint_userstories_report CASCADE;
 CREATE VIEW vw_sprint_userstories_report AS
 SELECT  sprint_title,
         userstory_id            AS "id",
-        userstory_title         AS "userstory title",
+        userstory_title         AS "Userstory Title",
         status                  AS "Status",
         tasks_total             AS "Tasks Total",
         total_tasks_progress    AS "tasks in progress",

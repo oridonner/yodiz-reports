@@ -25,8 +25,9 @@ def get_full_path(file):
 
 def import_config(file):
     file_path = get_full_path(file)
-    file_name = file_path + '.config'
-    with open(file_name,'r') as config_file:
+    file_path = os.path.join(file_path,'.yodiz')
+    file_path = os.path.join(file_path,'.config')
+    with open(file_path,'r') as config_file:
         config = yaml.safe_load(config_file)
     return config
 

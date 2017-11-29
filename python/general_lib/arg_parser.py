@@ -1,4 +1,5 @@
 import argparse as ag
+
 import sys
 
 # function description: parses the arguments received from the user
@@ -14,9 +15,11 @@ def params():
     
     # build positional argument
     parser_build = subparsers.add_parser('build', help="builds postgres Yodizdb")
-    parser_build.add_argument("-t", "--table", help="recreate specific table and its relevat views from script")
-    parser_build.add_argument("-db", "--database", help="recreates all database objects from script")
-    parser_build.add_argument("-s", "--show", help="show objects created from script")
+    build_group = parser_build.add_mutually_exclusive_group(required = True)
+    #build_group.add_argument("-t", "--table", help="recreate specific table and its relevat views from script")
+    build_group.add_argument("--ddl", help="creates ddl script file",action='store_true')
+    build_group.add_argument("--database", help="executes ddl script file",action='store_true')
+    #build_group.add_argument("-s", "--show", help="show objects created from script")
     
     # pull positional argument
     parser_pull = subparsers.add_parser('pull', help="import resources from Yodiz")

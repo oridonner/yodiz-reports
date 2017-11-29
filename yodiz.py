@@ -3,6 +3,8 @@ import os
 import sys
 import yaml
 import uuid
+import subprocess
+
 from python.general_lib import postgres_connect as conn
 from python.general_lib import arg_parser as argp
 from python.mail_lib import sprints_mail
@@ -18,15 +20,14 @@ from python.pull_lib import userstories_extractor
 from python.general_lib import fnx
 
 def main():
-    params = argp.params()
     config = fnx.import_config(__file__)  
+    params = argp.params()
     connection = conn.postgres_connect(config)
-
     if params.cmd_object == 'build':
-        if params.table:
-            conn.create_table_objects(connection,params.table)
-        if params.show:
-            conn.create_all_objects(connection,params.show)
+        if params.ddl:
+            subprocess.Popen(".yodiz/build/database_build.sh")
+        if params.database:
+            subprocess.Popen("psql -h 192.168.0.33 -p 5432 -U postgres -a -f .yodiz/build/database_build.sql")
     
     if params.cmd_object == 'pull':
         transact_guid = uuid.uuid4()

@@ -13,11 +13,11 @@ def set_status_color(status):
     }.get(status)
 
 def tot_report_to_html_table(tot_report_headers,tot_report_data):
-    html = '<table style="width: 30%">'    
-    html_headers = "<tr>"
+    html = '<div style="float: left;"><table style="width: 30%">'    
+    html_headers = '<tr>'
     for header in tot_report_headers[1:]:
         html_headers += "<th style='text-align: left;padding: 8px;background-color:black;color:white;'>{}</th>".format(header)
-    html_headers += "</tr>"
+    html_headers += '</tr>'
     html += html_headers
     #build data
     for row in tot_report_data:
@@ -25,9 +25,9 @@ def tot_report_to_html_table(tot_report_headers,tot_report_data):
         #set second column id as hyperlink 
         for field in row[1:]:
             html_data += "<td  style='padding:5px'>{}</td>".format(field)
-        html_data += "</tr>"
+        html_data += '</tr>'
         html += html_data
-    html += '</table>'
+    html += '</table></div>'
     return html
 
 def sub_tot_report_to_html_table(sub_tot_report_headers,sub_tot_report_data):
@@ -56,9 +56,11 @@ def sub_tot_report_to_html_table(sub_tot_report_headers,sub_tot_report_data):
 
 def report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers,sub_tot_report_data):
     html = '<html><head><style>h1 {color: black; font-weight:bold; text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}</style></head><body><h1>Daily Sprint Report</h1>'
+    html += '<div style="display: inline-block">'
     #build table headers
     tot_report_html_table = tot_report_to_html_table(tot_report_headers,tot_report_data)
     html += tot_report_html_table
+    html += '<div style="float: right;"><img src="http://192.168.0.55/yodiz/hurray.jpg" alt="hurray Icon"></img></div></div>'
     html += '<br/><br/>'
     sub_tot_report_html_table = sub_tot_report_to_html_table(sub_tot_report_headers,sub_tot_report_data)
     html += sub_tot_report_html_table
