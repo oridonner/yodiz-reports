@@ -10,6 +10,7 @@ from python.general_lib import arg_parser as argp
 from python.mail_lib import sprints_mail
 from python.mail_lib import tasks_mail
 from python.mail_lib import inv_mail
+from python.mail_lib import release_mail
 
 from python.pull_lib import sprints_extractor
 from python.pull_lib import releases_extractor
@@ -54,7 +55,9 @@ def main():
         if params.sprints:
             sprints_mail.send(config,params.mailing_list)
         if params.tasks:
-            tasks_mail.send(config,params.mailing_list)
+            tasks_mail.send(config,params.mailing_list)        
+        if params.release:
+            release_mail.send(config,params.mailing_list)
         if params.inv:
             inv_mail.send(config)
 

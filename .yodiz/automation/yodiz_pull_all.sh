@@ -23,3 +23,4 @@ done
 $prereq_python $project_path mail --inv
 $prereq_python $project_path mail --sprints 
 $prereq_python $project_path mail --tasks
+$prereq_python $project_path mail --release

@@ -50,7 +50,7 @@ def send_email(subject, html_table,to_list=None,cc_list=None):
     if to_list is None:
         to_list = ['orid@sqreamtech.com']
     if cc_list is None:
-        cc_list = ['orid@sqreamtech.com']
+        cc_list = ['yuval@sqreamtech.com']
     msg = email.mime.Multipart.MIMEMultipart()
     body = email.mime.Text.MIMEText(html_table ,'html')
     # append two lists into one before converting each list to string
@@ -70,5 +70,4 @@ def send_email(subject, html_table,to_list=None,cc_list=None):
     server.quit()
     message = "email {0} successfully sent To: {1} Cc: {2}".format(subject,to_str,cc_str)
     print message
-
 
