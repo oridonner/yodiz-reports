@@ -16,9 +16,16 @@ WITH Status AS
             EndDate
     FROM Releases
 )
-SELECT  *,
+SELECT  Id                      AS release_id,
+        Title                   AS release_title,
+        Status                  AS release_status,
+        CreatedById             AS created_by_id,
+        CAST(UpdatedOn AS DATE) AS updated_on,
+        CAST(CreatedOn AS DATE) AS created_on,
+        CAST(StartDate AS DATE) AS start_date,
+        CAST(EndDate AS DATE)   AS end_date,
         CASE 
             WHEN Status = 'Active'     THEN True
             ELSE False
-        END AS IsActive
+        END AS is_active
 FROM Status;
