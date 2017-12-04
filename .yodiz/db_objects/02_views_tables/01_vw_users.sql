@@ -1,3 +1,6 @@
+UPDATE users SET focusfactor = 0.5 WHERE firstname IN ('Ben','Ofer','Gil','Yuval');
+UPDATE users SET focusfactor = 0.75 WHERE firstname NOT IN ('Ben','Ofer','Gil','Yuval');
+
 DROP VIEW IF EXISTS vw_users CASCADE;
 CREATE VIEW vw_users AS
         SELECT  t1.Id                              AS user_id,

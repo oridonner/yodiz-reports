@@ -22,14 +22,26 @@ from python.general_lib import fnx
 
 def main():
     config = fnx.import_config(__file__)  
+    dbname = config['postgres']['dbname']
+    port = config['postgres']['port']
+    host = config['postgres']['host']
+    user = config['postgres']['user']
+    project_path = config['project']['path']
+    python = config['prerequisites']['python']
     params = argp.params()
     connection = conn.postgres_connect(config)
     if params.cmd_object == 'build':
         if params.ddl:
             subprocess.Popen(".yodiz/build/database_build.sh")
         if params.database:
-            subprocess.Popen("psql -h 192.168.0.33 -p 5432 -U postgres -a -f .yodiz/build/database_build.sql")
-    
+            subprocess.Popen(".yodiz/build/database_build.sh")
+            subprocess.Popen("psql -h {0} -p {1} -U {2} -a -f .yodiz/build/database_build.sql".format(host,port,user))
+        if params.views:
+            subprocess.Popen(".yodiz/build/views_build.sh")
+            print "creates and executes views_build.sql file"
+            statement = "/usr/local/sqream-prerequisites/versions/3.04/bin/psql -h {0} -p {1} -U {2} -d {3} -a -f {4}.yodiz/build/views_build.sql".format(host,port,user,dbname,project_path)
+            os.system(statement)
+            
     if params.cmd_object == 'pull':
         transact_guid = uuid.uuid4()
         url_headers={}

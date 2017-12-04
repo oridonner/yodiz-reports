@@ -60,8 +60,8 @@ def report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers
     #build table headers
     tot_report_html_table = tot_report_to_html_table(tot_report_headers,tot_report_data)
     html += tot_report_html_table
-    html += '<div style="float: right;"><img src="http://192.168.0.55/yodiz/hurray.jpg" alt="hurray Icon"></img></div></div>'
-    html += '<br/><br/>'
+    #html += '<div style="float: right;"><img src="http://192.168.0.55/yodiz/hurray.jpg" alt="hurray Icon"></img></div>'
+    html += '</div><br/><br/>'
     sub_tot_report_html_table = sub_tot_report_to_html_table(sub_tot_report_headers,sub_tot_report_data)
     html += sub_tot_report_html_table
     html += '</body></html>'
@@ -88,6 +88,10 @@ def send(config,mailing_list):
             to_list = None
             cc_list = None
             if mailing_list:
-                to_list = config['mailing_list']['sprints']['to']
-                cc_list = config['mailing_list']['sprints']['cc']
+                if 'blue' in sprint_header['sprint_title'].lower():
+                    to_list = config['mailing_list']['sprints']['blue']['to']
+                    cc_list = config['mailing_list']['sprints']['blue']['cc']
+                if 'green' in sprint_header['sprint_title'].lower():
+                    to_list = config['mailing_list']['sprints']['green']['to']
+                    cc_list = config['mailing_list']['sprints']['green']['cc']                
             fnx.send_email(subject,html,to_list,cc_list)

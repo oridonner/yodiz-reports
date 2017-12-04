@@ -2,6 +2,7 @@ DROP VIEW IF EXISTS vw_tasks_tot CASCADE;
 CREATE VIEW vw_tasks_tot AS
 SELECT  T1.task_id,
         T1.created_on   AS task_created_on,
+        T2.userstory_id,
         T3.sprint_id,
         T3.sprint_title,
         T3.start_date   AS sprint_start_date

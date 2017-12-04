@@ -87,6 +87,6 @@ def send(config,mailing_list):
         to_list = None
         cc_list = None
         if mailing_list:
-            to_list = config['mailing_list']['sprints']['to']
-            cc_list = config['mailing_list']['sprints']['cc']
+            to_list = config['mailing_list']['release']['to']
+            cc_list = config['mailing_list']['release']['cc']
         fnx.send_email(subject,html,to_list,cc_list)

@@ -1,0 +1,47 @@
+environment: dev
+server:
+   ip: 192.168.0.200
+   user: orid
+   password: orid11
+prerequisites:
+   execute: /usr/local/sqream-prerequisites/versions/system-default/bin/use-prerequisites.sh
+   python: /usr/local/sqream-prerequisites/versions/3.04/bin/python
+project: 
+   path: /home/orid/Documents/projects/Yodiz/
+   name: yodiz.py
+git-remote: 
+   ssh: git@192.168.0.165:devops/Yodiz.git
+   http: http://192.168.0.165:3722/devops/Yodiz.git
+postgres:
+   psql: '/usr/local/sqream-prerequisites/versions/3.04/bin/psql'
+   host: '192.168.0.33'
+   port: 5432
+   user: 'postgres'
+   password: 'postgres11'
+   dbname: 'yodizdev'
+yodiz:
+   url: 'https://app.yodiz.com/api/rest/v1/projects/4/'
+   api-key: '083c5c49-c1cc-490b-bffa-58b6d457ab57'
+   api-token: 'v29APgj5S3I6PvjbHu8l2az-IpQtZhe1n2hGDXOAKv4'
+mailing_list:
+   sprints:
+      green:
+            to:
+            - orid@sqreamtech.com
+            cc:
+            - yuval@sqreamtech.com
+      blue:
+            to:
+            - orid@sqreamtech.com
+            cc:
+            - yuval@sqreamtech.com
+   tasks:
+      to:
+         - orid@sqreamtech.com
+      cc:
+         - yuval@sqreamtech.com
+   release:
+      to:
+         - orid@sqreamtech.com
+      cc:
+         - yuval@sqreamtech.com

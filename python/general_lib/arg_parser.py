@@ -19,6 +19,7 @@ def params():
     #build_group.add_argument("-t", "--table", help="recreate specific table and its relevat views from script")
     build_group.add_argument("--ddl", help="creates ddl script file",action='store_true')
     build_group.add_argument("--database", help="executes ddl script file",action='store_true')
+    build_group.add_argument("--views", help="executes views ddl script file",action='store_true')
     #build_group.add_argument("-s", "--show", help="show objects created from script")
     
     # pull positional argument

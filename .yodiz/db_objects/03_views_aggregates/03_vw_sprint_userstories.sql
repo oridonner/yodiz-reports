@@ -7,6 +7,7 @@ CREATE VIEW vw_sprint_userstories AS
                 T1.userstory_id,
                 T1.userstory_title,
                 L1.total_tasks_usersoty + L2.total_issues_userstory                     AS tasks_total,
+                COALESCE(L3.tasks_added,0)                                              AS total_tasks_unplanned,
                 COALESCE(L1.total_tasks_blocked,0)                                      AS total_tasks_blocked,
                 COALESCE(L1.total_tasks_progress,0)                                     AS total_tasks_progress,
                 COALESCE(L2.total_issues_done,0)  + COALESCE(L1.total_tasks_done,0)     AS tasks_completed,
@@ -67,7 +68,22 @@ CREATE VIEW vw_sprint_userstories AS
                                         SUM(CASE WHEN P1.is_open THEN 0 ELSE 1 END)::NUMERIC    AS total_issues_done
                                 FROM vw_issues AS P1     
                                 WHERE P1.userstory_id   = T1.userstory_id
-                        ) AS L2 ON TRUE   
+                        ) AS L2 ON TRUE
+        --tasks opened after sprint started
+        LEFT JOIN LATERAL (
+                                SELECT  Q1.sprint_id, 
+                                        COUNT(Q1.*) AS total_tasks,
+                                        L1.tasks_added
+                                FROM vw_tasks_tot AS Q1
+                                LEFT JOIN LATERAL       (
+                                                                SELECT P1.userstory_id,count(P1.*) AS tasks_added
+                                                                FROM vw_tasks_tot P1
+                                                                WHERE P1.task_created_on > P1.sprint_start_date AND P1.userstory_id = Q1.userstory_id
+                                                                GROUP BY 1
+                                                        ) AS L1 ON TRUE 
+                                WHERE Q1.userstory_id = T1.userstory_id
+                                GROUP BY 1,3
+                        ) AS L3 ON TRUE
         WHERE T1.is_active
         )
         SELECT  sprint_title,
@@ -80,7 +96,8 @@ CREATE VIEW vw_sprint_userstories AS
                      when total_tasks_progress = 0 and tasks_completed = 0 then 'Not Started'
                      else 'err'
                 end                     AS "status",
-                tasks_total,             
+                tasks_total,   
+                total_tasks_unplanned,          
                 total_tasks_progress,    
                 tasks_completed,         
                 task_comp_ratio, 
