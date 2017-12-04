@@ -1,12 +1,27 @@
 
+--Update focufactor
 UPDATE users SET focusfactor = 0.5 WHERE firstname IN ('Ben','Ofer','Gil','Yuval');
 UPDATE users SET focusfactor = 0.75 WHERE firstname NOT IN ('Ben','Ofer','Gil','Yuval');
+--Update is_rnd
+UPDATE users SET is_rnd = true WHERE id=11;
+UPDATE users SET is_rnd = true WHERE id=25;
+UPDATE users SET is_rnd = true WHERE id=36;
+UPDATE users SET is_rnd = true WHERE id=4;
+UPDATE users SET is_rnd = true WHERE id=17;
+UPDATE users SET is_rnd = true WHERE id=18;
+UPDATE users SET is_rnd = true WHERE id=19;
+UPDATE users SET is_rnd = true WHERE id=28;
+UPDATE users SET is_rnd = true WHERE id=47;
+UPDATE users SET is_rnd = true WHERE id=51;
+UPDATE users SET is_rnd = true WHERE id=53;
+UPDATE users SET is_rnd = true WHERE id=54;
 DROP VIEW IF EXISTS vw_users CASCADE;
 CREATE VIEW vw_users AS
         SELECT  t1.Id                              AS user_id,
                 t1.FirstName                       AS first_name,
                 t1.LastName                        AS last_name,
                 t1.FirstName || ' ' || LastName    AS full_name,
+                t1.is_rnd                          AS is_rnd,
                 t2.email                           AS email,
                 t1.UpdatedOn                       AS updated_on,
                 t1.CreatedOn                       AS created_on,
@@ -385,17 +400,18 @@ DROP VIEW IF EXISTS vw_capacity CASCADE;
 CREATE VIEW vw_capacity AS
         SELECT  T4.sprint_title,
                 T2.full_name,
-                COUNT(T1.task_id)                               AS tot_assigned_tasks,
-                SUM(T1.effort_estimate)                         AS sum_effort_estimate,
-                SUM(T1.effort_logged)                           AS sum_effort_logged,
-                SUM(T1.effort_remaining)                        AS sum_effort_remaining,
+                COALESCE(COUNT(T1.task_id),0)                   AS tot_assigned_tasks,
+                COALESCE(SUM(T1.effort_estimate),0)             AS sum_effort_estimate,
+                COALESCE(SUM(T1.effort_logged),0)               AS sum_effort_logged,
+                COALESCE(SUM(T1.effort_remaining),0)            AS sum_effort_remaining,
                 T5.remaining_days                               AS days_remaining,
                 T5.remaining_days * 8.5 * T2.focus_factor       AS estimated_remaining_capacity
         FROM vw_tasks           AS T1
-        LEFT JOIN vw_users      AS T2 ON T2.user_id = T1.task_owner_id
-        JOIN vw_userstories     AS T3 ON T3.userstory_id = T1.userstory_id
-        JOIN vw_sprints         AS T4 ON T4.sprint_id = T3.sprint_id
-        JOIN vw_sprints_headers AS T5 ON T5.sprint_id = T4.sprint_id
+        RIGHT JOIN vw_users      AS T2 ON T2.user_id = T1.task_owner_id
+        LEFT JOIN vw_userstories     AS T3 ON T3.userstory_id = T1.userstory_id
+        LEFT JOIN vw_sprints         AS T4 ON T4.sprint_id = T3.sprint_id
+        LEFT JOIN vw_sprints_headers AS T5 ON T5.sprint_id = T4.sprint_id
+        WHERE T2.is_rnd
         GROUP BY 1,2,7,8;     
 
 

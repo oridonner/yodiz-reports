@@ -70,4 +70,3 @@ def send_email(subject, html_table,to_list=None,cc_list=None):
     server.quit()
     message = "email {0} successfully sent To: {1} Cc: {2}".format(subject,to_str,cc_str)
     print message
-
