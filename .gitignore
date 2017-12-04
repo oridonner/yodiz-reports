@@ -4,4 +4,4 @@ temp/
 **/*.pyc
 **/*.py~
 **/*.orig
-.config
+.config*
