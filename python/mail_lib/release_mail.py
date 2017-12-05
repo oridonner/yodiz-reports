@@ -62,8 +62,7 @@ def report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers
     #build table headers
     tot_report_html_table = tot_report_to_html_table(tot_report_headers,tot_report_data)
     html += tot_report_html_table
-    html += '<div style="float: right;"><img src="http://192.168.0.55/yodiz/hurray.jpg" alt="hurray Icon"></img></div></div>'
-    html += '<br/><br/>'
+    html += '</div><br/><br/>'
     sub_tot_report_html_table = sub_tot_report_to_html_table(sub_tot_report_headers,sub_tot_report_data)
     html += sub_tot_report_html_table
     html += '</body></html>'

@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS vw_userstories_daily CASCADE;
-CREATE TABLE vw_userstories_daily 
+DROP TABLE IF EXISTS userstories_daily CASCADE;
+CREATE TABLE userstories_daily 
 (
     id                      SERIAL,
     date                    date DEFAULT current_date,
