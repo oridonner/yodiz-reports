@@ -9,8 +9,10 @@ CREATE VIEW vw_capacity_report AS
             days_remaining                  AS "Days Remaining", 
             estimated_remaining_capacity    AS "Estimated Remaining Capacity",
             CASE 
-                    WHEN  estimated_remaining_capacity < sum_effort_remaining THEN 'RISK' 
+                    WHEN sum_effort_remaining > estimated_remaining_capacity    THEN 'Overload' 
+                    WHEN sum_effort_estimate = 0                                THEN 'Idle'
+                    WHEN estimated_remaining_capacity/sum_effort_estimate > 3   THEN 'Idle'                        
                     ELSE 'OK' 
             END                             AS "Capacity Allocation"
     FROM vw_capacity
-    ORDER BY 9 DESC ,1,4 ;
+    ORDER BY 9 DESC ,1,4;

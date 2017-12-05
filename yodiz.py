@@ -8,7 +8,7 @@ import subprocess
 from python.general_lib import postgres_connect as conn
 from python.general_lib import arg_parser as argp
 from python.mail_lib import sprints_mail
-from python.mail_lib import tasks_mail
+from python.mail_lib import capacity_mail
 from python.mail_lib import inv_mail
 from python.mail_lib import release_mail
 
@@ -27,6 +27,10 @@ def main():
     host = config['postgres']['host']
     user = config['postgres']['user']
     project_path = config['project']['path']
+    project_name = config['project']['name']
+    project_full_path = os.path.join(project_path,project_name)
+    html_lib = os.path.join(project_path,'.yodiz/debug/html/')
+    
     python = config['prerequisites']['python']
     params = argp.params()
     connection = conn.postgres_connect(config)
@@ -65,9 +69,9 @@ def main():
     
     if params.cmd_object == 'mail':
         if params.sprints:
-            sprints_mail.send(config,params.mailing_list)
-        if params.tasks:
-            tasks_mail.send(config,params.mailing_list)        
+            sprints_mail.send(config,params.mailing_list,params.output_file)
+        if params.capacity:
+            capacity_mail.send(config,params.mailing_list,params.output_file)        
         if params.release:
             release_mail.send(config,params.mailing_list)
         if params.inv:
@@ -82,3 +86,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+                #html_file = open("/home/orid/Documents/projects/Yodiz/.yodiz/debug/html/capacity.html","w")

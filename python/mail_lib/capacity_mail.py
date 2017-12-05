@@ -1,15 +1,15 @@
 import sys
 import email
 import smtplib
-from decimal import *
 from itertools import chain
 from python.general_lib import fnx
 from python.general_lib import postgres_connect as conn
 
 def set_status_color(status):
     return {
-        'RISK': "Red",
-        'Idle': "Orange"
+        'Overload': "Red",
+        'Idle': "Orange",
+        'OK': None
     }.get(status)
 
 def unassigned_report_to_HTML(unassigned_report_data):
@@ -27,7 +27,7 @@ def unassigned_report_to_HTML(unassigned_report_data):
                     """.format(row[0])
     unassigned_html +=         """
                             </table>
-                            '<br/><br/><br/><br/>'
+                            <br/><br/><br/><br/>
                         </div>
                     """
     return unassigned_html
@@ -53,18 +53,7 @@ def capacity_report_to_HTML(capacity_report_headers,capacity_report_data):
     #build report table data
     #-----------------------
     for row in capacity_report_data:
-        set_color = None
-        getcontext().prec = 1
-        capacity_allocation = row[8]
-        effort_remaining = Decimal(row[5])
-        estimated_remaining = Decimal(row[7])
-        idle_flag = 0
-        if effort_remaining>0:
-            idle_flag = estimated_remaining/effort_remaining
-        if idle_flag>=3:
-            set_color = set_status_color('Idle')
-        if capacity_allocation == 'RISK':
-            set_color = set_status_color(capacity_allocation)
+        set_color = set_status_color(row[8])
         if set_color is not None:
             capacity_html +="""
                                 <tr bgcolor="{0}" style="border-style:solid">
@@ -111,16 +100,19 @@ def build_HTML(capacity_report_headers,capacity_report_data,unassigned_report_da
     return html
 
 #This function is exposed to API
-def send(config,mailing_list):
+def send(config,mailing_list,output_file):
     connection = conn.postgres_connect(config)
     capacity_report_headers = conn.get_table_culomns(connection,'vw_capacity_report')
     capacity_report_data = conn.postgres_rows_select(connection,'select * from vw_capacity_report where "Sprint Title" is not null')
     unassigned_report_data = conn.postgres_rows_select(connection,'select full_name from vw_capacity where sprint_title is null')
     html = build_HTML(capacity_report_headers,capacity_report_data,unassigned_report_data)
-    subject = "R&D members - Sprint capacity report"
-    to_list = None
-    cc_list = None
-    if mailing_list:
-        to_list = config['mailing_list']['tasks']['to']
-        cc_list = config['mailing_list']['tasks']['cc']
-    fnx.send_email(subject,html,to_list=to_list,cc_list=cc_list)
+    if output_file:
+        print output_file
+    else:
+        subject = "R&D members - Sprint capacity report"
+        to_list = None
+        cc_list = None
+        if mailing_list:
+            to_list = config['mailing_list']['capacity']['to']
+            cc_list = config['mailing_list']['capacity']['cc']
+        fnx.send_email(subject,html,to_list=to_list,cc_list=cc_list)
