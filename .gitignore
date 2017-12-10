@@ -5,3 +5,4 @@ temp/
 **/*.py~
 **/*.orig
 .config*
+**/.yodiz/automation/
