@@ -1,21 +1,7 @@
 
-DROP VIEW IF EXISTS vw_api_log;
-CREATE VIEW vw_api_log AS
-SELECT * 
-FROM api_log 
-ORDER BY time_stamp DESC 
-LIMIT 10;
-
 DROP DATABASE IF EXISTS yodizdev;
 CREATE DATABASE yodizdev;
 \c yodizdev
-
-CREATE SCHEMA IF NOT EXISTS EXTR;
-CREATE SCHEMA IF NOT EXISTS TRNS;
-CREATE SCHEMA IF NOT EXISTS LOAD;
-CREATE SCHEMA IF NOT EXISTS TEMP;
-CREATE SCHEMA IF NOT EXISTS YODIZ;
-
 
 CREATE EXTENSION IF NOT EXISTS tablefunc;
 CREATE EXTENSION IF NOT EXISTS hstore;
@@ -100,9 +86,9 @@ INSERT INTO inventory (
 VALUES 
 ('api_log','table'),('db_log','table'),('issues','table'),('releases','table'),('sprints','table'),('tasks','table'),('userstories','table'),('users','table'),
 ('vw_users','view'),('vw_issues','view'),('vw_releases','view'),('vw_tasks','view'),('vw_sprints','view'),('vw_userstories','view'),
-('vw_sprint_userstories','view'),('vw_sprints_headers','view'),('vw_tasks_tot','view'),('vw_sprint_effort','view'),('vw_capacity','view'),
-('vw_release_headers','view'),('vw_release_effort','view'),('vw_releases','view'),
-('vw_capacity_report','view'),('vw_sprint_userstories_report','view'),('vw_sprint_summary_report','view');
+('vw_sprint_userstories','view'),('vw_sprints_headers','view'),('vw_tasks_headers','view'),('vw_sprint_effort','view'),('vw_capacity','view'),
+('vw_release_headers','view'),('vw_release_effort','view'),('vw_releases','view'),('vw_userstories_unassigned','view'),
+('vw_capacity_report','view'),('vw_sprint_userstories_report','view'),('vw_sprint_summary_report','view'),('vw_capacity_unassigned','view');
 
 
 DROP TABLE IF EXISTS Issues CASCADE;
@@ -347,11 +333,10 @@ FROM Status;
 
 DROP VIEW IF EXISTS vw_tasks CASCADE;
 CREATE VIEW vw_tasks AS
-SELECT  T1.guid,
+SELECT  T1.userstoryid  AS userstory_id,
         T1.taskid       AS task_id,
+        T1.title        AS task_title,
         T1.taskownerid  AS task_owner_id,
-        T1.userstoryid  AS userstory_id,
-        T1.title,
         T1.createdbyid              AS created_by,
         CAST(T1.updatedon AS DATE)  AS updated_on,
         T1.updatedbyid              AS updated_by,
@@ -368,6 +353,13 @@ SELECT  T1.guid,
         T1.effortlogged     AS effort_logged
    FROM tasks AS T1;
 
+DROP VIEW IF EXISTS vw_api_log;
+CREATE VIEW vw_api_log AS
+SELECT * 
+FROM api_log 
+ORDER BY time_stamp DESC 
+LIMIT 10;
+
 DROP VIEW IF EXISTS vw_sprints CASCADE;
 CREATE VIEW vw_sprints AS
     WITH status AS 
@@ -381,49 +373,55 @@ CREATE VIEW vw_sprints AS
                 CAST(EndDate AS DATE)       AS end_date
         FROM Sprints
     )
-    SELECT  t1.sprint_id                                AS sprint_id,
-            t1.sprint_title                             AS sprint_title,
+    SELECT  T1.sprint_id                                AS sprint_id,
+            T1.sprint_title                             AS sprint_title,
             CASE 
                     WHEN start_date > current_date                      THEN 'Planned'
                     WHEN current_date BETWEEN start_date AND end_date   THEN 'Active'
                     WHEN current_date > end_date                        THEN 'Closed'
             END                                         AS status,
-            t1.created_by_id                            AS created_by_id,
-            t2.full_name                                AS created_by,
-            t1.updated_on                               AS updated_on,
-            t1.created_on                               AS created_on,
-            t1.start_date                               AS start_date,
-            t1.end_date                                 AS end_date,
+            T1.created_by_id                            AS created_by_id,
+            T2.full_name                                AS created_by,
+            T1.updated_on                               AS updated_on,
+            T1.created_on                               AS created_on,
+            T1.start_date                               AS start_date,
+            T1.end_date                                 AS end_date,
             CASE 
                 WHEN current_date BETWEEN start_date AND end_date THEN True
                 ELSE False
             END                                         AS is_active
-    FROM status     AS t1
-    JOIN vw_users   AS t2 on t2.user_id = t1.created_by_id;
-
+    FROM status     AS T1
+    JOIN vw_users   AS T2 on T2.user_id = T1.created_by_id;
+    -- LEFT JOIN LATERAL   (
+    --                         SELECT DISTINCT     P1.ReleaseId AS release_id,
+    --                                             P1.SprintId
+    --                         FROM UserStories AS P1
+    --                         WHERE P1.SprintId = T1.sprint_id AND P1.ReleaseId IS NOT NULL
+    --                     ) AS L1 ON TRUE
 
 DROP VIEW IF EXISTS vw_userstories CASCADE;
 CREATE VIEW vw_userstories AS
-    SELECT  T1.Id                                       AS userstory_id,
+    SELECT  T1.ReleaseId                                AS release_id,
+            T1.SprintId                                 AS sprint_id,
+            T2.sprint_title                             AS sprint_title,   
+            T2.is_active                                AS sprint_is_active,         
+            T1.Id                                       AS userstory_id,
             T1.Title                                    AS userstory_title,
-            T1.ReleaseId                                AS release_id,
-            T2.sprint_id                                AS sprint_id,
-            T2.sprint_title                             AS sprint_title,            
             T1.CreatedById                              AS created_by,
             T1.UpdatedOn                                AS updated_on,
             T1.UpdatedById                              AS updated_by,
             T1.CreatedOn                                AS created_on,
             T1.ResponsibleId                            AS responsible,
             T1.Status                                   AS status,
-            CASE 
-                WHEN T2.Status = 'Active'     THEN True
-                ELSE False
-            END                                         AS is_active,
             T1.EffortEstimate                           AS effort_estimate,
             T1.EffortRemaining                          AS effort_remaining,
             T1.EffortLogged                             AS effort_logged
     FROM UserStories    T1
-    JOIN vw_sprints     T2 ON T2.sprint_id = T1.SprintId; 
+    JOIN vw_sprints     T2 ON T2.sprint_id = T1.SprintId
+    WHERE T2.is_active;
+    /*
+select distinct release_id,sprint_id,userstory_id from vw_userstories;
+    */
 
 DROP VIEW IF EXISTS vw_inventory_tot CASCADE;
 CREATE VIEW vw_inventory_tot AS
@@ -445,25 +443,29 @@ LEFT JOIN LATERAL (
             FROM  table_count(T1.object_name) AS t(row_count BIGINT)                            
 ) AS L2 ON TRUE;
 
-DROP VIEW IF EXISTS vw_tasks_tot CASCADE;
-CREATE VIEW vw_tasks_tot AS
-SELECT  T1.task_id,
-        T1.created_on   AS task_created_on,
-        T2.userstory_id,
-        T3.sprint_id,
-        T3.sprint_title,
-        T3.start_date   AS sprint_start_date
-FROM vw_tasks       AS T1
-JOIN vw_userstories AS T2 ON T2.userstory_id = T1.userstory_id
-JOIN vw_sprints     AS T3 ON T3.sprint_id = T2.sprint_id;
-
+DROP VIEW IF EXISTS vw_tasks_headers CASCADE;
+CREATE VIEW vw_tasks_headers AS
+        SELECT  T2.release_id,
+                T3.sprint_id,
+                T3.sprint_title,
+                T3.is_active AS sprint_is_active,
+                T2.userstory_id,
+                T1.task_id,
+                T1.task_title,
+                T1.created_on   AS task_created_on,
+                T3.start_date   AS sprint_start_date
+        FROM vw_tasks       AS T1
+        JOIN vw_userstories AS T2 ON T2.userstory_id = T1.userstory_id
+        JOIN vw_sprints     AS T3 ON T3.sprint_id = T2.sprint_id;
 
 DROP VIEW IF EXISTS vw_sprint_userstories CASCADE;
 CREATE VIEW vw_sprint_userstories AS
         WITH total AS 
         (
-        SELECT  T1.sprint_id,
+        SELECT  T1.release_id,
+                T1.sprint_id,
                 T1.sprint_title,
+                T1.sprint_is_active,
                 T1.userstory_id,
                 T1.userstory_title,
                 L1.total_tasks_usersoty + L2.total_issues_userstory                     AS tasks_total,
@@ -534,19 +536,22 @@ CREATE VIEW vw_sprint_userstories AS
                                 SELECT  Q1.sprint_id, 
                                         COUNT(Q1.*) AS total_tasks,
                                         L1.tasks_added
-                                FROM vw_tasks_tot AS Q1
+                                FROM vw_tasks_headers AS Q1
                                 LEFT JOIN LATERAL       (
                                                                 SELECT P1.userstory_id,count(P1.*) AS tasks_added
-                                                                FROM vw_tasks_tot P1
+                                                                FROM vw_tasks_headers P1
                                                                 WHERE P1.task_created_on > P1.sprint_start_date AND P1.userstory_id = Q1.userstory_id
                                                                 GROUP BY 1
                                                         ) AS L1 ON TRUE 
                                 WHERE Q1.userstory_id = T1.userstory_id
                                 GROUP BY 1,3
                         ) AS L3 ON TRUE
-        WHERE T1.is_active
+        --WHERE T1.is_active
         )
-        SELECT  sprint_title,
+        SELECT  release_id,
+                sprint_id,
+                sprint_title,
+                sprint_is_active,
                 userstory_id,           
                 userstory_title,        
                 case
@@ -596,6 +601,30 @@ CREATE VIEW vw_release_headers AS
         FROM vw_releases AS T1
         WHERE T1.is_active;
 
+--All sprints related to active release - including finished ones
+DROP VIEW IF EXISTS vw_sprint_effort CASCADE;
+CREATE VIEW vw_sprint_effort AS
+        WITH effort AS
+        (
+                SELECT  sprint_id,
+                        sprint_title, 
+                        SUM("estimate_total")   AS total_effort_estimate, 
+                        SUM("logged_total")     AS total_effort_spent, 
+                        SUM("remainig_total")   AS total_effort_remaining
+                FROM vw_sprint_userstories 
+                GROUP BY 1,2
+        )
+        SELECT  sprint_id,
+                sprint_title,
+                total_effort_estimate, 
+                total_effort_spent, 
+                total_effort_remaining,
+                CASE 
+                        WHEN total_effort_estimate = 0 THEN 0
+                        ELSE round(total_effort_spent*100/total_effort_estimate) 
+                END AS effort_completion_ratio
+        FROM effort;
+
 DROP VIEW IF EXISTS vw_release_effort CASCADE;
 CREATE VIEW vw_release_effort AS
         WITH effort AS
@@ -617,24 +646,6 @@ CREATE VIEW vw_release_effort AS
                 round(total_effort_spent*100/total_effort_estimate) AS effort_completion_ratio
         FROM effort;
 
-DROP VIEW IF EXISTS vw_sprint_effort CASCADE;
-CREATE VIEW vw_sprint_effort AS
-        WITH effort AS
-        (
-                SELECT  sprint_title, 
-                        SUM("estimate_total")   AS total_effort_estimate, 
-                        SUM("logged_total")     AS total_effort_spent, 
-                        SUM("remainig_total")   AS total_effort_remaining
-                FROM vw_sprint_userstories 
-                GROUP BY 1
-        )
-        SELECT  sprint_title,
-                total_effort_estimate, 
-                total_effort_spent, 
-                total_effort_remaining,
-                round(total_effort_spent*100/total_effort_estimate) AS effort_completion_ratio
-        FROM effort;
-
 DROP VIEW IF EXISTS vw_capacity CASCADE;
 CREATE VIEW vw_capacity AS
         SELECT  T4.sprint_title,
@@ -650,9 +661,8 @@ CREATE VIEW vw_capacity AS
         LEFT JOIN vw_userstories     AS T3 ON T3.userstory_id = T1.userstory_id
         LEFT JOIN vw_sprints         AS T4 ON T4.sprint_id = T3.sprint_id
         LEFT JOIN vw_sprints_headers AS T5 ON T5.sprint_id = T4.sprint_id
-        WHERE T2.is_rnd
-        GROUP BY 1,2,7,8;     
-
+        WHERE T2.is_rnd AND T4.is_active
+        GROUP BY 1,2,7,8;
 
 DROP VIEW IF EXISTS vw_capacity_report CASCADE;
 CREATE VIEW vw_capacity_report AS
@@ -673,6 +683,18 @@ CREATE VIEW vw_capacity_report AS
     FROM vw_capacity
     ORDER BY 9 DESC ,1,4;
 
+DROP VIEW IF EXISTS vw_capacity_unassigned CASCADE;
+CREATE VIEW vw_capacity_unassigned AS
+    SELECT  T1.full_name
+    FROM vw_users AS T1 
+    LEFT JOIN LATERAL (
+                        SELECT DISTINCT P1.full_name 
+                        FROM vw_capacity AS P1
+                        WHERE P1.full_name = T1.full_name
+                    ) AS L1 ON TRUE
+    WHERE T1.is_rnd AND L1.full_name IS NULL;
+
+
 DROP VIEW IF EXISTS vw_sprint_userstories_report CASCADE;
 CREATE VIEW vw_sprint_userstories_report AS
 SELECT  sprint_title,
@@ -688,6 +710,7 @@ SELECT  sprint_title,
         logged_total            AS "Effort Spent",
         remainig_total          AS "Effort Remaining"
 FROM vw_sprint_userstories
+WHERE sprint_is_active
 ORDER BY        sprint_title,
                 4,
                 task_comp_ratio DESC;
@@ -819,5 +842,43 @@ DROP VIEW IF EXISTS vw_release_userstories_report CASCADE;
 CREATE VIEW vw_release_userstories_report AS
 SELECT * 
 FROM vw_sprint_userstories_report 
-ORDER BY CAST(split_part("Tasks Completion Ratio",'%',1) AS INT) DESC;
+ORDER BY CAST(split_part("Tasks Completion Ratio",'%',1) AS INT) DESC, "Status" ASC;
+
+DROP VIEW IF EXISTS vw_userstories_unassigned CASCADE;
+CREATE VIEW vw_userstories_unassigned AS
+    SELECT  T1.Id                                       AS userstory_id,
+            T1.Title                                    AS userstory_title,
+            T1.ReleaseId                                AS release_id,
+            T1.SprintId                                 AS sprint_id,
+            T2.Title                                    AS sprint_title,            
+            T1.CreatedById                              AS created_by,
+            T1.UpdatedOn                                AS updated_on,
+            T1.UpdatedById                              AS updated_by,
+            T1.CreatedOn                                AS created_on,
+            T1.ResponsibleId                            AS responsible,
+            T1.Status                                   AS status,
+            T1.EffortEstimate                           AS effort_estimate,
+            T1.EffortRemaining                          AS effort_remaining,
+            T1.EffortLogged                             AS effort_logged
+    FROM UserStories    T1
+    LEFT JOIN Sprints        T2 ON T2.Id = T1.SprintId
+    JOIN vw_releases    T3 ON T3.release_id = T1.ReleaseId
+    WHERE T3.is_active AND T1.SprintId  IS NULL;
+
+--Update focufactor
+UPDATE users SET focusfactor = 0.5 WHERE firstname IN ('Ben','Ofer','Gil','Yuval');
+UPDATE users SET focusfactor = 0.75 WHERE firstname NOT IN ('Ben','Ofer','Gil','Yuval');
+--Update is_rnd
+UPDATE users SET is_rnd = true WHERE id=11;
+UPDATE users SET is_rnd = true WHERE id=25;
+UPDATE users SET is_rnd = true WHERE id=36;
+UPDATE users SET is_rnd = true WHERE id=4;
+UPDATE users SET is_rnd = true WHERE id=17;
+UPDATE users SET is_rnd = true WHERE id=18;
+UPDATE users SET is_rnd = true WHERE id=19;
+UPDATE users SET is_rnd = true WHERE id=28;
+UPDATE users SET is_rnd = true WHERE id=47;
+UPDATE users SET is_rnd = true WHERE id=51;
+UPDATE users SET is_rnd = true WHERE id=53;
+UPDATE users SET is_rnd = true WHERE id=54;
 

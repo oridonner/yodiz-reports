@@ -48,8 +48,6 @@ def main():
         db_object = ""
         if params.database:
             db_object= "database"
-            print "argument not supported yet"
-            sys.exit(0)
         if params.views:
             db_object= "views"
         if params.ddl:

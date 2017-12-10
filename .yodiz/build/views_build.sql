@@ -129,6 +129,13 @@ SELECT  T1.userstoryid  AS userstory_id,
         T1.effortlogged     AS effort_logged
    FROM tasks AS T1;
 
+DROP VIEW IF EXISTS vw_api_log;
+CREATE VIEW vw_api_log AS
+SELECT * 
+FROM api_log 
+ORDER BY time_stamp DESC 
+LIMIT 10;
+
 DROP VIEW IF EXISTS vw_sprints CASCADE;
 CREATE VIEW vw_sprints AS
     WITH status AS 
