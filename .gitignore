@@ -6,3 +6,5 @@ temp/
 **/*.orig
 .config*
 **/.yodiz/automation/
+**/database_build.sql
+**/views_build.sql
