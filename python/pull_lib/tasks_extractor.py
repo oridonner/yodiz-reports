@@ -35,7 +35,7 @@ def get_userstory_tasks_list(url_headers,userstory_id,connection,transact_guid):
 
 #get active userstories id's from postgres
 def get_userstories_ids(connection):
-    statement = 'select userstory_id from vw_userstories where is_active'
+    statement = 'select userstory_id from vw_userstories'
     userstories_ids = conn.get_rows(connection,statement)
     return userstories_ids
 

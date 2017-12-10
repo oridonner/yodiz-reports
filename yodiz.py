@@ -19,9 +19,20 @@ from python.pull_lib import issues_extractor
 from python.pull_lib import tasks_extractor
 from python.pull_lib import userstories_extractor
 from python.general_lib import fnx
+from python.general_lib import matplotlib_test as plot
 
 def main():
+
     config = fnx.import_config(__file__)  
+    connection = conn.postgres_connect(config)
+    # statement = "select * from vw_sprints_headers"
+    # sprint_chart_data = conn.postgres_rows_select(connection,statement)
+    # for item in sprint_chart_data:
+    #     print item
+    #plot.build_sprint_chart(config,sprint_chart_data)
+    #sys.exit(0)
+
+
     dbname = config['postgres']['dbname']
     port = config['postgres']['port']
     host = config['postgres']['host']
@@ -30,22 +41,26 @@ def main():
     project_name = config['project']['name']
     project_full_path = os.path.join(project_path,project_name)
     html_lib = os.path.join(project_path,'.yodiz/debug/html/')
-    
     python = config['prerequisites']['python']
+
     params = argp.params()
-    connection = conn.postgres_connect(config)
     if params.cmd_object == 'build':
-        if params.ddl:
-            subprocess.Popen(".yodiz/build/database_build.sh")
+        db_object = ""
         if params.database:
-            subprocess.Popen(".yodiz/build/database_build.sh")
-            subprocess.Popen("psql -h {0} -p {1} -U {2} -a -f .yodiz/build/database_build.sql".format(host,port,user))
+            db_object= "database"
+            print "argument not supported yet"
+            sys.exit(0)
         if params.views:
-            subprocess.Popen(".yodiz/build/views_build.sh")
-            print "creates and executes views_build.sql file"
-            statement = "/usr/local/sqream-prerequisites/versions/3.04/bin/psql -h {0} -p {1} -U {2} -d {3} -a -f {4}.yodiz/build/views_build.sql".format(host,port,user,dbname,project_path)
+            db_object= "views"
+        if params.ddl:
+            print "created {0} ddl file for database {1}".format(db_object,dbname)
+            statement = "{0}.yodiz/build/{1}_build.sh".format(project_path,db_object)
             os.system(statement)
-            
+        if params.execute:
+            print "executed {0} ddl file on database {1}".format(db_object,dbname)
+            statement ="psql -h {0} -p {1} -d {2} -U {3} -a -f {4}.yodiz/build/{5}_build.sql".format(host,port,dbname,user,project_path,db_object)
+            os.system(statement)
+
     if params.cmd_object == 'pull':
         transact_guid = uuid.uuid4()
         url_headers={}

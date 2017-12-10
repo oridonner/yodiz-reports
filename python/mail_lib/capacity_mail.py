@@ -102,9 +102,9 @@ def build_HTML(capacity_report_headers,capacity_report_data,unassigned_report_da
 #This function is exposed to API
 def send(config,mailing_list,output_file):
     connection = conn.postgres_connect(config)
+    unassigned_report_data = conn.postgres_rows_select(connection,'select full_name from vw_capacity_unassigned')
     capacity_report_headers = conn.get_table_culomns(connection,'vw_capacity_report')
     capacity_report_data = conn.postgres_rows_select(connection,'select * from vw_capacity_report where "Sprint Title" is not null')
-    unassigned_report_data = conn.postgres_rows_select(connection,'select full_name from vw_capacity where sprint_title is null')
     html = build_HTML(capacity_report_headers,capacity_report_data,unassigned_report_data)
     if output_file:
         print output_file

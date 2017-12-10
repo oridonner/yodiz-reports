@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS userstories_daily CASCADE;
 CREATE TABLE userstories_daily 
 (
     id                      SERIAL,
-    date                    date DEFAULT current_date,
+    date                    DATE,
     userstory_id            INT,
     userstory_title         TEXT,
     status                  TEXT,

@@ -74,10 +74,13 @@ def userstories_report_to_HTML(userstories_report_headers,userstories_report_dat
         userstory_html +="""
                                 <td style='padding:5px'><a href='{0}' target='_blank'>{1}</a></td>
                          """.format(link,row[1])
-        for field in row[2:]:
+        for i,field in enumerate(row[2:]):
+            color = ""
+            if (i == 3 and int(field) > 0):
+                color = "color:red;font-weight:bold"
             userstory_html +="""
-                                <td  style='padding:5px'>{}</td>
-                             """.format(field)
+                                <td style='padding:5px'><span style="{1}">{0}</span></td>
+                            """.format(field,color)
         userstory_html +="""
                             </tr>
                          """
@@ -123,8 +126,8 @@ def send(config,mailing_list,output_file):
         sprints_headers = conn.get_rows(connection , statement)
         i=1
         for sprint_header in sprints_headers:
-            statement = "select * from vw_sprint_userstories_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
             userstories_report_headers = conn.get_table_culomns(connection,'vw_sprint_userstories_report')
+            statement = "select * from vw_sprint_userstories_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
             userstories_report_data = conn.postgres_rows_select(connection,statement)
             statement = "select * from vw_sprint_summary_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
             tot_report_headers = conn.get_table_culomns(connection,'vw_sprint_summary_report')

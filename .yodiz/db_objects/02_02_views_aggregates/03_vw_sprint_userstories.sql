@@ -2,8 +2,10 @@ DROP VIEW IF EXISTS vw_sprint_userstories CASCADE;
 CREATE VIEW vw_sprint_userstories AS
         WITH total AS 
         (
-        SELECT  T1.sprint_id,
+        SELECT  T1.release_id,
+                T1.sprint_id,
                 T1.sprint_title,
+                T1.sprint_is_active,
                 T1.userstory_id,
                 T1.userstory_title,
                 L1.total_tasks_usersoty + L2.total_issues_userstory                     AS tasks_total,
@@ -74,19 +76,22 @@ CREATE VIEW vw_sprint_userstories AS
                                 SELECT  Q1.sprint_id, 
                                         COUNT(Q1.*) AS total_tasks,
                                         L1.tasks_added
-                                FROM vw_tasks_tot AS Q1
+                                FROM vw_tasks_headers AS Q1
                                 LEFT JOIN LATERAL       (
                                                                 SELECT P1.userstory_id,count(P1.*) AS tasks_added
-                                                                FROM vw_tasks_tot P1
+                                                                FROM vw_tasks_headers P1
                                                                 WHERE P1.task_created_on > P1.sprint_start_date AND P1.userstory_id = Q1.userstory_id
                                                                 GROUP BY 1
                                                         ) AS L1 ON TRUE 
                                 WHERE Q1.userstory_id = T1.userstory_id
                                 GROUP BY 1,3
                         ) AS L3 ON TRUE
-        WHERE T1.is_active
+        --WHERE T1.is_active
         )
-        SELECT  sprint_title,
+        SELECT  release_id,
+                sprint_id,
+                sprint_title,
+                sprint_is_active,
                 userstory_id,           
                 userstory_title,        
                 case

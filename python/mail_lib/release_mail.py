@@ -75,12 +75,12 @@ def send(config,mailing_list):
     if report_rows > 0:
         # release headers for email subject
         release_headers = conn.get_rows(connection , "select * from vw_release_headers")[0]
-        # release userstories fields and data
-        sub_tot_report_data = conn.postgres_rows_select(connection,"select * from vw_release_userstories_report")
-        sub_tot_report_headers = conn.get_table_culomns(connection,'vw_release_userstories_report')
         # release summary fields and data
         tot_report_data = conn.postgres_rows_select(connection,"select * from vw_release_summary_report")
         tot_report_headers = conn.get_table_culomns(connection,'vw_release_summary_report')            
+        # release userstories fields and data
+        sub_tot_report_data = conn.postgres_rows_select(connection,"select * from vw_release_userstories_report")
+        sub_tot_report_headers = conn.get_table_culomns(connection,'vw_release_userstories_report')
         html = report_to_html_doc(tot_report_headers,tot_report_data,sub_tot_report_headers,sub_tot_report_data)
         subject = "Release '{0}' report - day {1} out of {2} days".format(release_headers['release_title'],release_headers['day_number'],release_headers['total_days'])
         to_list = None

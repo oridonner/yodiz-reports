@@ -13,7 +13,5 @@ CREATE VIEW vw_capacity AS
         LEFT JOIN vw_userstories     AS T3 ON T3.userstory_id = T1.userstory_id
         LEFT JOIN vw_sprints         AS T4 ON T4.sprint_id = T3.sprint_id
         LEFT JOIN vw_sprints_headers AS T5 ON T5.sprint_id = T4.sprint_id
-        WHERE T2.is_rnd
-        GROUP BY 1,2,7,8;     
-
-
+        WHERE T2.is_rnd AND T4.is_active
+        GROUP BY 1,2,7,8;

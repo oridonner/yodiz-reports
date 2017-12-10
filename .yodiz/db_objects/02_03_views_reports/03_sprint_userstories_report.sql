@@ -13,6 +13,7 @@ SELECT  sprint_title,
         logged_total            AS "Effort Spent",
         remainig_total          AS "Effort Remaining"
 FROM vw_sprint_userstories
+WHERE sprint_is_active
 ORDER BY        sprint_title,
                 4,
                 task_comp_ratio DESC;

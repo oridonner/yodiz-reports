@@ -1,10 +1,9 @@
 DROP VIEW IF EXISTS vw_tasks CASCADE;
 CREATE VIEW vw_tasks AS
-SELECT  T1.guid,
+SELECT  T1.userstoryid  AS userstory_id,
         T1.taskid       AS task_id,
+        T1.title        AS task_title,
         T1.taskownerid  AS task_owner_id,
-        T1.userstoryid  AS userstory_id,
-        T1.title,
         T1.createdbyid              AS created_by,
         CAST(T1.updatedon AS DATE)  AS updated_on,
         T1.updatedbyid              AS updated_by,

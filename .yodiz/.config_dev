@@ -35,7 +35,7 @@ mailing_list:
             - orid@sqreamtech.com
             cc:
             - yuval@sqreamtech.com
-   tasks:
+   capacity:
       to:
          - orid@sqreamtech.com
       cc:
