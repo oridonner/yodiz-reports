@@ -35,7 +35,7 @@ DROP VIEW IF EXISTS vw_issues CASCADE;
 CREATE VIEW vw_issues as
     SELECT  Guid            ,
             Id              AS issue_id,
-            Title           ,
+            Title           AS issue_title,
             UserStoryId     AS userstory_id,
             CreatedById     AS created_by_id,
             UpdatedOn       AS updated_on,
@@ -350,6 +350,45 @@ CREATE VIEW vw_sprint_userstories AS
                         4,
                         task_comp_ratio DESC;
 
+DROP VIEW IF EXISTS vw_sprint_issues CASCADE;
+CREATE VIEW vw_sprint_issues AS
+        WITH total AS 
+        (
+                SELECT  T2.sprint_title,
+                        T1.issue_id,
+                        T1.issue_title,
+                        T2.is_active,
+                        T1.effort_estimate::NUMERIC                        AS effort_estimate,
+                        T1.effort_remaining::NUMERIC                       AS effort_remaining,
+                        T1.effort_logged::NUMERIC                          AS effort_spent,
+                        CASE 
+                                WHEN effort_estimate = 0 THEN 0
+                        ELSE round(T1.effort_logged*100/T1.effort_estimate) 
+                END                                                        AS effort_completion_ratio,  
+                        CASE WHEN T1.is_open THEN 0 ELSE 1 END::NUMERIC    AS is_done
+                FROM vw_issues     T1
+                JOIN vw_sprints    T2 ON T2.sprint_id=T1.sprint_id
+                WHERE T2.is_active
+                --GROUP BY 1,2,3,4,5
+        )
+        SELECT  sprint_title,
+                issue_id,
+                issue_title,
+                effort_estimate,
+                effort_remaining,
+                effort_spent,
+                is_done,
+                effort_completion_ratio,
+                case
+                     when is_done = 1 then 'Done'
+                     when effort_completion_ratio > 0 then 'In Progress'
+                     when effort_completion_ratio = 0 then 'Not Started'
+                     else 'err'
+                end                     AS "status" 
+        FROM total
+        ORDER BY        sprint_title,
+                        8 DESC;
+
 DROP VIEW IF EXISTS vw_sprints_headers CASCADE;
 CREATE VIEW vw_sprints_headers AS
 SELECT  T1.sprint_id,
@@ -490,6 +529,18 @@ WHERE sprint_is_active
 ORDER BY        sprint_title,
                 4,
                 task_comp_ratio DESC;
+
+DROP VIEW IF EXISTS vw_sprint_issues_report CASCADE;
+CREATE VIEW vw_sprint_issues_report AS
+SELECT  sprint_title,
+        issue_id            AS "Issue Id",
+        issue_title         AS "Issue Title",    
+        effort_estimate     AS "Effort Estimate",
+        effort_remaining    AS "Effort Remaining",
+        effort_spent        AS "Effort Spent",
+        is_done,
+        effort_completion_ratio || '%' AS "Tasks Completion Ratio"
+FROM vw_sprint_issues;
 
 DROP VIEW IF EXISTS vw_release_summary_report CASCADE;
 CREATE VIEW vw_release_summary_report AS

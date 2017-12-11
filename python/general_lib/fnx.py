@@ -57,7 +57,7 @@ def send_email(subject, html_table,to_list=None,cc_list=None):
     if to_list is None:
         to_list = ['orid@sqreamtech.com']
     if cc_list is None:
-        cc_list = ['yuval@sqreamtech.com']
+        cc_list = ['ori@sqreamtech.com']
     msg = MIMEMultipart()
     body = MIMEText(html_table ,'html')
     # append two lists into one before converting each list to string

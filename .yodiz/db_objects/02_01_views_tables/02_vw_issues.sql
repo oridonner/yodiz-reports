@@ -3,7 +3,7 @@ DROP VIEW IF EXISTS vw_issues CASCADE;
 CREATE VIEW vw_issues as
     SELECT  Guid            ,
             Id              AS issue_id,
-            Title           ,
+            Title           AS issue_title,
             UserStoryId     AS userstory_id,
             CreatedById     AS created_by_id,
             UpdatedOn       AS updated_on,

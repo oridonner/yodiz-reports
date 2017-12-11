@@ -58,6 +58,17 @@ FROM    (
                         cast(round(cast(sum(case when "status" = 'Done' then 1 else 0 end) as numeric) / cast(count(userstory_id) as numeric) * 100) as text) || '%' AS "%Completed"
             from vw_sprint_userstories 
             group by 1
+            UNION
+            --issues
+            SELECT      sprint_title            AS "sprint_title",
+                        'Issues'                AS "Category",
+                        COUNT(issue_id)         AS "Total",
+                        sum(case when "status" = 'Done' then 1 else 0 end)  AS "#Completed",
+                        COUNT(issue_id) - sum(case when "status" = 'Done' then 1 else 0 end) AS "Remaining",
+                        4                       AS "Sort",
+                        cast(round(cast(sum(case when "status" = 'Done' then 1 else 0 end) as numeric) / cast(count(issue_id) as numeric) * 100) as text) || '%' AS "%Completed"
+            FROM vw_sprint_issues
+            group by 1
     order by 6
     ) AS T;
 

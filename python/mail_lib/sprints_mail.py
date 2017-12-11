@@ -89,7 +89,50 @@ def userstories_report_to_HTML(userstories_report_headers,userstories_report_dat
                       """
     return userstory_html
 
-def build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,userstories_report_data):
+def issues_report_to_HTML(issues_report_headers,issues_report_data):
+    issues_html ="""
+                        <table>
+                            <tr>
+                    """
+    #build table header
+    for header in issues_report_headers[1:]:
+        issues_html +="""    <th style="background-color:#C23F38;">{}</th>
+                         """.format(header)
+    issues_html += """
+                            </tr>
+                      """
+    #build table data
+    for row in issues_report_data:
+        set_color = set_status_color(row[3])
+        if set_color is not None:
+            issues_html += """
+                            <tr bgcolor="{0}" style="border-style:solid">
+                        """.format(set_color)
+        else:
+            issues_html += """
+                            <tr style="border-style:solid">
+                        """
+        #set second column id as hyperlink
+        link = 'https://app.yodiz.com/plan/pages/board.vz?cid=21431#/app/bg-{0}'.format(row[1])
+        issues_html +="""
+                                <td style='padding:5px'><a href='{0}' target='_blank'>{1}</a></td>
+                         """.format(link,row[1])
+        for i,field in enumerate(row[2:]):
+            #color = ""
+            #if (i == 3 and int(field) > 0):
+            #    color = "color:red;font-weight:bold"
+            issues_html +="""
+                                <td style='padding:5px'>{0}</td>
+                            """.format(field)
+        issues_html +="""
+                            </tr>
+                         """
+    issues_html += """
+                        </table>
+                      """
+    return issues_html
+
+def build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,userstories_report_data,issues_report_headers,issues_report_data):
     #Open HTML
     html =  """
                     <html>
@@ -109,6 +152,13 @@ def build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,use
             """
     #Build sprint's userstories report HTML
     html += userstories_report_to_HTML(userstories_report_headers,userstories_report_data)
+    html += """
+                                <br/>
+                                <br/>
+        """
+    #Build sprint's issues report HTML
+    html += issues_report_to_HTML(issues_report_headers,issues_report_data)
+
 
     #Close HTML
     html += """
@@ -132,7 +182,10 @@ def send(config,mailing_list,output_file):
             statement = "select * from vw_sprint_summary_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
             tot_report_headers = conn.get_table_culomns(connection,'vw_sprint_summary_report')
             tot_report_data = conn.postgres_rows_select(connection,statement)
-            html = build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,userstories_report_data)
+            statement = "select * from vw_sprint_issues_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
+            issues_report_headers = conn.get_table_culomns(connection,'vw_sprint_issues_report')
+            issues_report_data = conn.postgres_rows_select(connection,statement)
+            html = build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,userstories_report_data,issues_report_headers,issues_report_data)
             if output_file:
                 project_path = config['project']['path']
                 html_lib = os.path.join(project_path,'.yodiz/debug/html/')
