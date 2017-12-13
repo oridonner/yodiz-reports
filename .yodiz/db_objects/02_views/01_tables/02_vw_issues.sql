@@ -10,7 +10,6 @@ CREATE VIEW vw_issues as
             UpdatedById     AS updated_by_id,
             CreatedOn       AS created_on,
             ResponsibleId   AS responsible_id,
-            Status          ,
             Severity        ,
             ReleaseId       ,
             SprintId        AS sprint_id,
@@ -32,8 +31,8 @@ CREATE VIEW vw_issues as
             END AS severity_val,
             CASE    
                 WHEN Status IN ('Blocked') THEN 'Blocked'
-                WHEN Status IN ('New','Next') THEN 'Open'
-                WHEN Status IN ('Waiting for testing','Testing','Developing') THEN 'InProgress'
-                WHEN Status IN ('QA approved') THEN 'Approved'
-            END AS open_issue_category
+                WHEN Status IN ('New','Next') THEN 'Not Started'
+                WHEN Status IN ('Waiting for testing','Testing','Developing') THEN 'In Progress'
+                WHEN Status IN ('QA approved','Closed','Ignored') THEN 'Done'
+            END AS status
     FROM Issues;

@@ -25,14 +25,17 @@ def main():
 
     config = fnx.import_config(__file__)  
     connection = conn.postgres_connect(config)
-    # statement = "select * from vw_sprints_headers"
-    # sprint_chart_data = conn.postgres_rows_select(connection,statement)
+    # statement = "select * from vw_sprint_burndown_chart where sprint_id =159"
+    # sprint_chart_data = conn.get_rows(connection,statement)
+    # remaining_days = []
+    # trend_line = []
+    # remaining_effort = []
     # for item in sprint_chart_data:
-    #     print item
-    #plot.build_sprint_chart(config,sprint_chart_data)
+    #     remaining_days.append (item['remaining_days'])
+    #     trend_line.append(item['trend_line'])
+    #     remaining_effort.append(item['remaining_effort'])
+    # plot.build_sprint_chart(config, remaining_days,trend_line,remaining_effort)
     #sys.exit(0)
-
-
     dbname = config['postgres']['dbname']
     port = config['postgres']['port']
     host = config['postgres']['host']

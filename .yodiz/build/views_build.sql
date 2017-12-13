@@ -42,7 +42,6 @@ CREATE VIEW vw_issues as
             UpdatedById     AS updated_by_id,
             CreatedOn       AS created_on,
             ResponsibleId   AS responsible_id,
-            Status          ,
             Severity        ,
             ReleaseId       ,
             SprintId        AS sprint_id,
@@ -64,10 +63,10 @@ CREATE VIEW vw_issues as
             END AS severity_val,
             CASE    
                 WHEN Status IN ('Blocked') THEN 'Blocked'
-                WHEN Status IN ('New','Next') THEN 'Open'
-                WHEN Status IN ('Waiting for testing','Testing','Developing') THEN 'InProgress'
-                WHEN Status IN ('QA approved') THEN 'Approved'
-            END AS open_issue_category
+                WHEN Status IN ('New','Next') THEN 'Not Started'
+                WHEN Status IN ('Waiting for testing','Testing','Developing') THEN 'In Progress'
+                WHEN Status IN ('QA approved','Closed','Ignored') THEN 'Done'
+            END AS status
     FROM Issues;
 
 DROP VIEW IF EXISTS vw_releases CASCADE;
@@ -199,25 +198,46 @@ CREATE VIEW vw_userstories AS
 select distinct release_id,sprint_id,userstory_id from vw_userstories;
     */
 
-DROP VIEW IF EXISTS vw_inventory_tot CASCADE;
-CREATE VIEW vw_inventory_tot AS
-SELECT  T1.object_name,
-        T1.object_type,
-        CASE 
-            WHEN L1.table_name IS NULL THEN 'False'
-            ELSE 'True'
-        END AS is_exist,
-        L2.row_count
-FROM inventory AS T1
-LEFT JOIN LATERAL (     
-                    SELECT P1.table_name
-                    FROM information_schema.tables AS P1
-                    WHERE P1.table_name   = T1.object_name AND table_schema='public'
-                ) AS L1 ON TRUE
-LEFT JOIN LATERAL (
-            SELECT row_count 
-            FROM  table_count(T1.object_name) AS t(row_count BIGINT)                            
-) AS L2 ON TRUE;
+DROP VIEW IF EXISTS vw_sprint_issues CASCADE;
+CREATE VIEW vw_sprint_issues AS
+        -- WITH total AS 
+        -- (
+        SELECT  T2.sprint_title,
+                T1.issue_id,
+                T1.issue_title,
+                T1.status,
+                T2.is_active,
+                T1.effort_estimate::NUMERIC                        AS effort_estimate,
+                T1.effort_remaining::NUMERIC                       AS effort_remaining,
+                T1.effort_logged::NUMERIC                          AS effort_spent,
+                CASE 
+                        WHEN effort_estimate = 0 THEN 0
+                ELSE round(T1.effort_logged*100/T1.effort_estimate) 
+        END                                                        AS effort_completion_ratio,  
+                CASE WHEN T1.is_open THEN 0 ELSE 1 END::NUMERIC    AS is_done
+        FROM vw_issues     T1
+        JOIN vw_sprints    T2 ON T2.sprint_id=T1.sprint_id
+        WHERE T2.is_active
+        ORDER BY        sprint_title,
+        8 DESC;
+        -- )
+        -- SELECT  sprint_title,
+        --         issue_id,
+        --         issue_title,
+        --         effort_estimate,
+        --         effort_remaining,
+        --         effort_spent,
+        --         is_done,
+        --         effort_completion_ratio,
+        --         case
+        --              when is_done = 1 then 'Done'
+        --              when effort_spent > 0 then 'In Progress'
+        --              when effort_completion_ratio = 0 then 'Not Started'
+        --              else 'err'
+        --         end                     AS "status" 
+        -- FROM total
+        -- ORDER BY        sprint_title,
+        --                 8 DESC;
 
 DROP VIEW IF EXISTS vw_tasks_headers CASCADE;
 CREATE VIEW vw_tasks_headers AS
@@ -283,7 +303,7 @@ CREATE VIEW vw_sprint_userstories AS
                                 + 
                                 COALESCE(L2.total_issues_remaining,0)
                                 ,1
-                        )                                                               AS remainig_total
+                        )                                                               AS remaining_total
         FROM vw_userstories     T1
         -- tasks totals
         LEFT JOIN LATERAL (     
@@ -344,50 +364,31 @@ CREATE VIEW vw_sprint_userstories AS
                 task_comp_ratio, 
                 estimate_total,          
                 logged_total,            
-                remainig_total          
+                remaining_total          
         FROM total
         ORDER BY        sprint_title,
                         4,
                         task_comp_ratio DESC;
 
-DROP VIEW IF EXISTS vw_sprint_issues CASCADE;
-CREATE VIEW vw_sprint_issues AS
-        WITH total AS 
-        (
-                SELECT  T2.sprint_title,
-                        T1.issue_id,
-                        T1.issue_title,
-                        T2.is_active,
-                        T1.effort_estimate::NUMERIC                        AS effort_estimate,
-                        T1.effort_remaining::NUMERIC                       AS effort_remaining,
-                        T1.effort_logged::NUMERIC                          AS effort_spent,
-                        CASE 
-                                WHEN effort_estimate = 0 THEN 0
-                        ELSE round(T1.effort_logged*100/T1.effort_estimate) 
-                END                                                        AS effort_completion_ratio,  
-                        CASE WHEN T1.is_open THEN 0 ELSE 1 END::NUMERIC    AS is_done
-                FROM vw_issues     T1
-                JOIN vw_sprints    T2 ON T2.sprint_id=T1.sprint_id
-                WHERE T2.is_active
-                --GROUP BY 1,2,3,4,5
-        )
-        SELECT  sprint_title,
-                issue_id,
-                issue_title,
-                effort_estimate,
-                effort_remaining,
-                effort_spent,
-                is_done,
-                effort_completion_ratio,
-                case
-                     when is_done = 1 then 'Done'
-                     when effort_completion_ratio > 0 then 'In Progress'
-                     when effort_completion_ratio = 0 then 'Not Started'
-                     else 'err'
-                end                     AS "status" 
-        FROM total
-        ORDER BY        sprint_title,
-                        8 DESC;
+DROP VIEW IF EXISTS vw_userstories_daily CASCADE;
+CREATE VIEW vw_userstories_daily AS 
+SELECT  T1.date                  ,
+        T2.sprint_id             ,
+        T2.sprint_title          ,
+        T1.userstory_id          ,
+        T1.userstory_title       ,
+        T1.status                ,
+        T1.tasks_total           ,
+        T1.total_tasks_unplanned ,
+        T1.total_tasks_progress  ,
+        T1.tasks_completed       ,
+        T1.task_comp_ratio       ,
+        T1.estimate_total        ,
+        T1.logged_total          ,
+        T1.remaining_total      
+FROM userstories_daily  AS T1
+JOIN vw_userstories     AS T2 ON T2.userstory_id = T1.userstory_id
+ORDER BY 1 ASC;
 
 DROP VIEW IF EXISTS vw_sprints_headers CASCADE;
 CREATE VIEW vw_sprints_headers AS
@@ -404,17 +405,47 @@ FROM vw_sprints AS T1
 JOIN vw_users   AS T2 ON T2.user_id = T1.created_by_id
 WHERE T1.is_active;
 
-DROP VIEW IF EXISTS vw_release_headers CASCADE;
-CREATE VIEW vw_release_headers AS
-        SELECT  T1.release_id,
-                T1.release_title,
-                T1.start_date,
-                T1.end_date,
-                T1.end_date - T1.start_date + 1         AS total_days,
-                current_date - T1.start_date + 1        AS day_number, 
-                T1.end_date - current_date              AS remaining_days
-        FROM vw_releases AS T1
-        WHERE T1.is_active;
+DROP VIEW IF EXISTS vw_sprint_calendar CASCADE;
+CREATE VIEW vw_sprint_calendar AS
+    WITH calendar AS
+    (
+        SELECT  T1.sprint_id,
+                RANK() OVER (PARTITION BY T1.sprint_id ORDER BY L1.date ASC) AS sprint_day,
+                T1.total_days,
+                L1.date AS sprint_date,
+                L1.is_work_day
+        FROM vw_sprints_headers AS T1
+        LEFT JOIN LATERAL (   
+                            SELECT  P1.date,
+                                    P1.is_work_day
+                            FROM calendar AS P1
+                            WHERE P1.date >= T1.start_date AND P1.date <= T1.end_date
+        ) AS L1 ON TRUE                   
+    )
+    SELECT  sprint_id,
+            total_days,
+            sprint_day,
+            is_work_day,
+            total_days - sprint_day +1 AS remaining_days,
+            sprint_date
+    FROM calendar;
+
+DROP VIEW IF EXISTS vw_sprints_daily CASCADE;
+CREATE VIEW vw_sprints_daily AS 
+SELECT  T1.date                  ,
+        T2.sprint_id             ,
+        T2.sprint_title          ,
+        SUM(T1.tasks_total)             AS tasks_total,
+        SUM(T1.total_tasks_unplanned)   AS total_tasks_unplanned,
+        SUM(T1.total_tasks_progress)    AS total_tasks_progress,
+        SUM(T1.tasks_completed)         AS tasks_completed,
+        SUM(T1.estimate_total)          AS estimate_total,
+        SUM(T1.logged_total)            AS logged_total,
+        SUM(T1.remaining_total)          AS remaining_total  
+FROM userstories_daily  AS T1
+JOIN vw_userstories     AS T2 ON T2.userstory_id = T1.userstory_id
+GROUP BY 1,2,3
+ORDER BY 2,1 ASC;
 
 --All sprints related to active release - including finished ones
 DROP VIEW IF EXISTS vw_sprint_effort CASCADE;
@@ -425,7 +456,7 @@ CREATE VIEW vw_sprint_effort AS
                         sprint_title, 
                         SUM("estimate_total")   AS total_effort_estimate, 
                         SUM("logged_total")     AS total_effort_spent, 
-                        SUM("remainig_total")   AS total_effort_remaining
+                        SUM("remaining_total")   AS total_effort_remaining
                 FROM vw_sprint_userstories 
                 GROUP BY 1,2
         )
@@ -440,6 +471,18 @@ CREATE VIEW vw_sprint_effort AS
                 END AS effort_completion_ratio
         FROM effort;
 
+DROP VIEW IF EXISTS vw_release_headers CASCADE;
+CREATE VIEW vw_release_headers AS
+        SELECT  T1.release_id,
+                T1.release_title,
+                T1.start_date,
+                T1.end_date,
+                T1.end_date - T1.start_date + 1         AS total_days,
+                current_date - T1.start_date + 1        AS day_number, 
+                T1.end_date - current_date              AS remaining_days
+        FROM vw_releases AS T1
+        WHERE T1.is_active;
+
 DROP VIEW IF EXISTS vw_release_effort CASCADE;
 CREATE VIEW vw_release_effort AS
         WITH effort AS
@@ -447,7 +490,7 @@ CREATE VIEW vw_release_effort AS
                 SELECT  T3.release_title,
                         SUM(T1."estimate_total")   AS total_effort_estimate, 
                         SUM(T1."logged_total")     AS total_effort_spent, 
-                        SUM(T1."remainig_total")   AS total_effort_remaining
+                        SUM(T1."remaining_total")   AS total_effort_remaining
                 FROM vw_sprint_userstories      AS T1
                 JOIN vw_userstories             AS T2 ON T2.userstory_id = T1.userstory_id 
                 JOIN vw_releases                AS T3 ON T3.release_id = T2.release_id
@@ -510,6 +553,22 @@ CREATE VIEW vw_capacity_unassigned AS
     WHERE T1.is_rnd AND L1.full_name IS NULL;
 
 
+DROP VIEW IF EXISTS vw_sprint_issues_report CASCADE;
+CREATE VIEW vw_sprint_issues_report AS
+SELECT  sprint_title,
+        issue_id            AS "Issue Id",
+        issue_title         AS "Issue Title",    
+        status              AS "Status",
+        effort_estimate     AS "Effort Estimate",
+        effort_remaining    AS "Effort Remaining",
+        effort_spent        AS "Effort Spent",
+        is_done,
+        effort_completion_ratio || '%' AS "Tasks Completion Ratio"
+FROM vw_sprint_issues
+ORDER BY    sprint_title,
+            4,
+            effort_completion_ratio DESC;
+
 DROP VIEW IF EXISTS vw_sprint_userstories_report CASCADE;
 CREATE VIEW vw_sprint_userstories_report AS
 SELECT  sprint_title,
@@ -523,60 +582,12 @@ SELECT  sprint_title,
         task_comp_ratio || '%'  AS "Tasks Completion Ratio",
         estimate_total          AS "Effort Estimate",
         logged_total            AS "Effort Spent",
-        remainig_total          AS "Effort Remaining"
+        remaining_total          AS "Effort Remaining"
 FROM vw_sprint_userstories
 WHERE sprint_is_active
 ORDER BY        sprint_title,
                 4,
                 task_comp_ratio DESC;
-
-DROP VIEW IF EXISTS vw_sprint_issues_report CASCADE;
-CREATE VIEW vw_sprint_issues_report AS
-SELECT  sprint_title,
-        issue_id            AS "Issue Id",
-        issue_title         AS "Issue Title",    
-        effort_estimate     AS "Effort Estimate",
-        effort_remaining    AS "Effort Remaining",
-        effort_spent        AS "Effort Spent",
-        is_done,
-        effort_completion_ratio || '%' AS "Tasks Completion Ratio"
-FROM vw_sprint_issues;
-
-DROP VIEW IF EXISTS vw_release_summary_report CASCADE;
-CREATE VIEW vw_release_summary_report AS
-SELECT  "Category",
-        "Total",
-        "#Completed",
-        "%Completed"
-FROM    (
-            select  'Release Days'              AS "Category",
-                    total_days                  AS "Total",
-                    day_number                  AS "#Completed",
-                    remaining_days              AS "Remaining",
-                    1                           AS "Sort",
-                    round(day_number*100/total_days) || '%' AS "%Completed"
-            from vw_release_headers
-            UNION
-            --effort
-            select  'Release Effort'            AS "Category",
-                    total_effort_estimate       AS "Total",
-                    total_effort_spent          AS "#Completed",
-                    total_effort_remaining      AS "Remaining",
-                    2                           AS "Sort",
-                    effort_completion_ratio || '%' as "%Completed"
-            from vw_release_effort
-            UNION
-            --userstories
-            select      'Userstories'                       AS "Category",
-                        count(userstory_id)                 AS "Total",
-                        sum(case when "status" = 'Done' then 1 else 0 end)  AS "#Completed",
-                        NULL                                AS "Remaining",
-                        3                                   AS "Sort",
-                        cast(round(cast(sum(case when "status" = 'Done' then 1 else 0 end) as numeric) / cast(count(userstory_id) as numeric) * 100) as text) || '%' AS "%Completed"
-            from vw_sprint_userstories
-    order by 6
-    ) AS T;
-
 
 DROP VIEW IF EXISTS vw_sprint_summary_report CASCADE;
 CREATE VIEW vw_sprint_summary_report AS
@@ -638,6 +649,17 @@ FROM    (
                         cast(round(cast(sum(case when "status" = 'Done' then 1 else 0 end) as numeric) / cast(count(userstory_id) as numeric) * 100) as text) || '%' AS "%Completed"
             from vw_sprint_userstories 
             group by 1
+            UNION
+            --issues
+            SELECT      sprint_title            AS "sprint_title",
+                        'Issues'                AS "Category",
+                        COUNT(issue_id)         AS "Total",
+                        sum(case when "status" = 'Done' then 1 else 0 end)  AS "#Completed",
+                        COUNT(issue_id) - sum(case when "status" = 'Done' then 1 else 0 end) AS "Remaining",
+                        4                       AS "Sort",
+                        cast(round(cast(sum(case when "status" = 'Done' then 1 else 0 end) as numeric) / cast(count(issue_id) as numeric) * 100) as text) || '%' AS "%Completed"
+            FROM vw_sprint_issues
+            group by 1
     order by 6
     ) AS T;
 /*
@@ -670,6 +692,116 @@ CREATE VIEW vw_release_userstories_report AS
 SELECT * 
 FROM vw_sprint_userstories_report 
 ORDER BY CAST(split_part("Tasks Completion Ratio",'%',1) AS INT) DESC, "Status" ASC;
+
+DROP VIEW IF EXISTS vw_release_summary_report CASCADE;
+CREATE VIEW vw_release_summary_report AS
+SELECT  "Category",
+        "Total",
+        "#Completed",
+        "%Completed"
+FROM    (
+            select  'Release Days'              AS "Category",
+                    total_days                  AS "Total",
+                    day_number                  AS "#Completed",
+                    remaining_days              AS "Remaining",
+                    1                           AS "Sort",
+                    round(day_number*100/total_days) || '%' AS "%Completed"
+            from vw_release_headers
+            UNION
+            --effort
+            select  'Release Effort'            AS "Category",
+                    total_effort_estimate       AS "Total",
+                    total_effort_spent          AS "#Completed",
+                    total_effort_remaining      AS "Remaining",
+                    2                           AS "Sort",
+                    effort_completion_ratio || '%' as "%Completed"
+            from vw_release_effort
+            UNION
+            --userstories
+            select      'Userstories'                       AS "Category",
+                        count(userstory_id)                 AS "Total",
+                        sum(case when "status" = 'Done' then 1 else 0 end)  AS "#Completed",
+                        NULL                                AS "Remaining",
+                        3                                   AS "Sort",
+                        cast(round(cast(sum(case when "status" = 'Done' then 1 else 0 end) as numeric) / cast(count(userstory_id) as numeric) * 100) as text) || '%' AS "%Completed"
+            from vw_sprint_userstories
+    order by 6
+    ) AS T;
+
+
+DROP VIEW IF EXISTS vw_sprint_burndown CASCADE;
+CREATE VIEW vw_sprint_burndown AS
+        SELECT  T1.sprint_id,
+                to_char(T1.sprint_date, 'DD/MM') as sprint_date ,
+                T1.is_work_day,
+                T1.sprint_day,
+                T1.remaining_days,
+                ROUND(CAST(T3.remaining_total AS NUMERIC),0)              AS remaining_effort,
+                ROUND((T2.total_effort_estimate/T1.total_days) * T1.remaining_days,0) as trend_line
+        FROM vw_sprint_calendar         AS T1
+        LEFT JOIN vw_sprint_effort           AS T2 ON T2.sprint_id = T1.sprint_id
+        LEFT JOIN vw_sprints_daily           AS T3 ON T3.sprint_id = T1.sprint_id AND T3.date = T1.sprint_date;
+
+DROP VIEW IF EXISTS vw_sprint_burndown_chart CASCADE;
+CREATE VIEW vw_sprint_burndown_chart AS
+WITH remaining_1 AS
+(
+SELECT  sprint_id,
+        sprint_date,
+        is_work_day,
+        sprint_day,
+        remaining_days,
+        CASE 
+                WHEN remaining_effort IS NULL THEN lead(remaining_effort) OVER (ORDER BY sprint_id,sprint_date) 
+                ELSE remaining_effort
+        END AS remaining_effort,
+        trend_line
+FROM vw_sprint_burndown
+),  remaining_2 AS
+(
+SELECT  sprint_id,
+        sprint_date,
+        is_work_day,
+        sprint_day,
+        remaining_days,
+        CASE 
+                WHEN remaining_effort IS NULL THEN lead(remaining_effort) OVER (ORDER BY sprint_id,sprint_date) 
+                ELSE remaining_effort
+        END AS remaining_effort,
+        trend_line
+FROM remaining_1
+)
+SELECT  sprint_id,
+        sprint_date,
+        is_work_day,
+        sprint_day,
+        remaining_days,
+        CASE 
+                WHEN remaining_effort IS NULL THEN lead(remaining_effort) OVER (ORDER BY sprint_id,sprint_date) 
+                ELSE remaining_effort
+        END AS remaining_effort,
+        trend_line
+FROM remaining_2;
+
+DROP VIEW IF EXISTS vw_inventory_tot CASCADE;
+CREATE VIEW vw_inventory_tot AS
+SELECT  T1.object_name,
+        T1.object_type,
+        CASE 
+            WHEN L1.table_name IS NULL THEN 'False'
+            ELSE 'True'
+        END AS is_exist,
+        L2.row_count
+FROM inventory AS T1
+LEFT JOIN LATERAL (     
+                    SELECT P1.table_name
+                    FROM information_schema.tables AS P1
+                    WHERE P1.table_name   = T1.object_name AND table_schema='public'
+                ) AS L1 ON TRUE
+LEFT JOIN LATERAL (
+            SELECT row_count 
+            FROM  table_count(T1.object_name) AS t(row_count BIGINT)                            
+) AS L2 ON TRUE;
 
 DROP VIEW IF EXISTS vw_userstories_unassigned CASCADE;
 CREATE VIEW vw_userstories_unassigned AS

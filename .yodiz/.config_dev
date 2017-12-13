@@ -10,6 +10,7 @@ project:
    path: /home/orid/Documents/projects/Yodiz/
    name: yodiz.py
    debug: .yodiz/debug/
+   charts: .yodiz/charts/
 git-remote: 
    ssh: git@192.168.0.165:devops/Yodiz.git
    http: http://192.168.0.165:3722/devops/Yodiz.git

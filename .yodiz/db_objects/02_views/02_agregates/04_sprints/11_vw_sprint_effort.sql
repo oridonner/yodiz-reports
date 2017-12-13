@@ -7,7 +7,7 @@ CREATE VIEW vw_sprint_effort AS
                         sprint_title, 
                         SUM("estimate_total")   AS total_effort_estimate, 
                         SUM("logged_total")     AS total_effort_spent, 
-                        SUM("remainig_total")   AS total_effort_remaining
+                        SUM("remaining_total")   AS total_effort_remaining
                 FROM vw_sprint_userstories 
                 GROUP BY 1,2
         )

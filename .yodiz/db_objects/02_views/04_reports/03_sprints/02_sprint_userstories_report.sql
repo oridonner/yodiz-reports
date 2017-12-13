@@ -11,7 +11,7 @@ SELECT  sprint_title,
         task_comp_ratio || '%'  AS "Tasks Completion Ratio",
         estimate_total          AS "Effort Estimate",
         logged_total            AS "Effort Spent",
-        remainig_total          AS "Effort Remaining"
+        remaining_total          AS "Effort Remaining"
 FROM vw_sprint_userstories
 WHERE sprint_is_active
 ORDER BY        sprint_title,

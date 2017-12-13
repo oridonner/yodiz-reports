@@ -47,7 +47,7 @@ CREATE VIEW vw_sprint_userstories AS
                                 + 
                                 COALESCE(L2.total_issues_remaining,0)
                                 ,1
-                        )                                                               AS remainig_total
+                        )                                                               AS remaining_total
         FROM vw_userstories     T1
         -- tasks totals
         LEFT JOIN LATERAL (     
@@ -108,7 +108,7 @@ CREATE VIEW vw_sprint_userstories AS
                 task_comp_ratio, 
                 estimate_total,          
                 logged_total,            
-                remainig_total          
+                remaining_total          
         FROM total
         ORDER BY        sprint_title,
                         4,

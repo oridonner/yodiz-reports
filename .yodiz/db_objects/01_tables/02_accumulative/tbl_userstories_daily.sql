@@ -13,5 +13,5 @@ CREATE TABLE userstories_daily
     task_comp_ratio         REAL, 
     estimate_total          REAL,         
     logged_total            REAL,           
-    remainig_total          REAL        
+    remaining_total         REAL        
 );
