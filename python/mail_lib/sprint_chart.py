@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-def build_sprint_chart(config, remaining_days,trend_line,remaining_effort):
-
+def build_sprint_chart(config,sprint_id, remaining_days,trend_line,remaining_effort):
     # Days
     x = remaining_days
     # Hours
@@ -32,5 +31,6 @@ def build_sprint_chart(config, remaining_days,trend_line,remaining_effort):
     plt.legend()
     # plt.show()       # Use this to view the plot
     chart_path = config['project']['charts']
-    chart_name = 'sprint.png'
+    chart_name = 'sprint_{0}.png'.format(str(sprint_id))
     plt.savefig(os.path.join(chart_path,chart_name))
+    plt.gcf().clear()

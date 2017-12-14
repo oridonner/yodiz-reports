@@ -1,10 +1,17 @@
 import os
 import sys
+import cgi
 import email
+import uuid
 import smtplib
 from itertools import chain
 from python.general_lib import fnx
 from python.general_lib import postgres_connect as conn
+from email.mime.multipart import MIMEMultipart
+from email.mime.text      import MIMEText
+from email.mime.image     import MIMEImage
+from email.header         import Header 
+import sprint_chart as chart
 
 def set_status_color(status):
     return {
@@ -13,10 +20,13 @@ def set_status_color(status):
         'Blocked': "Red"
     }.get(status)
 
-def tot_report_to_HTML(tot_report_headers,tot_report_data):
+def tot_report_to_HTML(sprint_title,connection):
+    statement = "select * from vw_sprint_summary_report where sprint_title='{0}'".format(sprint_title)
+    tot_report_headers = conn.get_table_culomns(connection,'vw_sprint_summary_report')
+    tot_report_data = conn.postgres_rows_select(connection,statement)
     tot_html =  """
                         <div style="float: left;">
-                            <table style="width: 30%">
+                            <table style="margin-top:12%; border-collapse:collapse; width:30%;">
                                 <tr>
                 """
     #build table header
@@ -46,14 +56,27 @@ def tot_report_to_HTML(tot_report_headers,tot_report_data):
                 """
     return tot_html
 
-def userstories_report_to_HTML(userstories_report_headers,userstories_report_data):
+def embed_image_HTML(image_title,connection):
+    cid=str(uuid.uuid4())
+    image_html =MIMEText(
+                """
+                        <div dir="ltr" style="width:50%;float: right;">
+                            <img src="cid:{0}" alt="{1}" style="max-width:80%;">
+                        </div>
+                """.format(cgi.escape(image_title, quote=True),cid), 'html', 'utf-8')           
+    return image_html
+
+def userstories_report_to_HTML(sprint_title,connection):
+    userstories_report_headers = conn.get_table_culomns(connection,'vw_sprint_userstories_report')
+    statement = "select * from vw_sprint_userstories_report where sprint_title='{0}'".format(sprint_title)
+    userstories_report_data = conn.postgres_rows_select(connection,statement)
     userstory_html ="""
-                        <table>
+                        <table style="border-collapse: collapse;width: 100%;">
                             <tr>
                     """
     #build table header
     for header in userstories_report_headers[1:]:
-        userstory_html +="""    <th>{}</th>
+        userstory_html +="""    <th style="background-color:#D9E9FF;">{}</th>
                          """.format(header)
     userstory_html += """
                             </tr>
@@ -89,9 +112,12 @@ def userstories_report_to_HTML(userstories_report_headers,userstories_report_dat
                       """
     return userstory_html
 
-def issues_report_to_HTML(issues_report_headers,issues_report_data):
+def issues_report_to_HTML(sprint_title,connection):
+    statement = "select * from vw_sprint_issues_report where sprint_title='{0}'".format(sprint_title)
+    issues_report_headers = conn.get_table_culomns(connection,'vw_sprint_issues_report')
+    issues_report_data = conn.postgres_rows_select(connection,statement)
     issues_html ="""
-                        <table>
+                        <table style="border-collapse: collapse;width: 100%;">
                             <tr>
                     """
     #build table header
@@ -132,41 +158,94 @@ def issues_report_to_HTML(issues_report_headers,issues_report_data):
                       """
     return issues_html
 
-def build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,userstories_report_data,issues_report_headers,issues_report_data):
-    #Open HTML
+def build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,userstories_report_data,issues_report_headers,issues_report_data,image_title):
     html =  """
-                    <html>
-                        <head>
-                            <style>h1 {color: black; font-weight:bold; text-align: center;}label {color: darkgreen;}table {border-collapse: collapse;width: 100%;}th {text-align: left;padding: 8px;background-color:cornflowerblue;color:white;}</style>
-                        </head>
-                            <body>
-                                <h1>Daily Sprint Report</h1>
-                                    <div style="display: inline-block">
+                        <div style="width:75%;display: inline-block">
             """
     #Build sprint total report HTML
     html += tot_report_to_HTML(tot_report_headers,tot_report_data)
+    #Build HTML to embed image
+    html += embed_image_HTML(image_title)
     html += """
-                                    </div>
-                                    <br/>
-                                    <br/>
+                        </div>
+                        <br/>
+                        <br/>
             """
     #Build sprint's userstories report HTML
     html += userstories_report_to_HTML(userstories_report_headers,userstories_report_data)
     html += """
-                                <br/>
-                                <br/>
+                        <br/>
+                        <br/>
         """
     #Build sprint's issues report HTML
     html += issues_report_to_HTML(issues_report_headers,issues_report_data)
-
-
-    #Close HTML
-    html += """
-                            </body>
-                    </html>
-            """
     return html
 
+def send_email_image(config,sprint_id,sprint_title,tot_report_html,userstories_report_html,issues_report_html,to_list=None,cc_list=None):
+    if to_list is None:
+        to_list = ['orid@sqreamtech.com']
+    if cc_list is None:
+        cc_list = ['orid@sqreamtech.com']
+    recips_list = cc_list + to_list
+    to_str = ','.join(to_list)
+    cc_str = ','.join(cc_list)
+    chart_path = config['project']['charts']
+    chart_name = 'sprint_{0}.png'.format(str(sprint_id))
+    chart_path_full = os.path.join(chart_path,chart_name)
+    img = dict(title=chart_name, path=chart_path_full, cid=str(uuid.uuid4()),tot_report=tot_report_html,userstories_report=userstories_report_html,issues_report=issues_report_html )
+    msg = MIMEMultipart('related')
+    msg['From']    = 'zbabira@sqreamtech.com'
+    msg['To'] = to_str
+    msg['Cc'] = cc_str
+    msg['Subject'] = sprint_title
+    msg_alternative = MIMEMultipart('alternative')
+    msg.attach(msg_alternative)
+    msg_text = MIMEText('[image: {title}]'.format(**img), 'plain', 'utf-8')
+    msg_alternative.attach(msg_text)
+
+    msg_html = MIMEText("""
+                        <div style="width:75%;display: inline-block">
+                            {tot_report}
+                            <div dir="ltr" style="width:50%;float: right;">
+                                <img src="cid:{cid}" alt="{alt}" style="max-width:80%;">
+                            </div>
+                        </div>
+                        <br/>
+                        <br/>
+                        {userstories_report}
+                        <br/>
+                        <br/>
+                        {issues_report}
+                        """.format(alt=cgi.escape(img['title'], quote=True), **img), 'html', 'utf-8')
+    msg_alternative.attach(msg_html)
+
+    with open(img['path'], 'rb') as file:
+        msg_image = MIMEImage(file.read(), name=os.path.basename(img['path']))
+        msg_image.add_header('Content-ID', '<{}>'.format(img['cid']))
+        msg.attach(msg_image)
+
+    #recips = "orid@sqreamtech.com"
+    s = smtplib.SMTP('smtp.gmail.com')
+    s.starttls()
+    s.login('zbabira@gmail.com','sqreamzbabira')
+    s.sendmail('no-reply@sqreamtech.com', recips_list, msg.as_string())
+    s.quit()
+
+def create_sprint_chart(config,sprint_id):
+    connection = conn.postgres_connect(config)
+    statement = "select * from vw_sprint_burndown_chart where sprint_id ={0} order by sprint_day".format(sprint_id)
+    #print statement
+    sprint_chart_data = conn.get_rows(connection,statement)
+    remaining_days = []
+    trend_line = []
+    remaining_effort = []
+    for item in sprint_chart_data:
+        remaining_days.append (item['remaining_days'])
+        trend_line.append(item['trend_line'])
+        remaining_effort.append(item['remaining_effort'])
+    #print trend_line
+    chart.build_sprint_chart(config,sprint_id, remaining_days,trend_line,remaining_effort)
+  
 #This function is exposed to API
 def send(config,mailing_list,output_file):
     connection = conn.postgres_connect(config)
@@ -176,16 +255,12 @@ def send(config,mailing_list,output_file):
         sprints_headers = conn.get_rows(connection , statement)
         i=1
         for sprint_header in sprints_headers:
-            userstories_report_headers = conn.get_table_culomns(connection,'vw_sprint_userstories_report')
-            statement = "select * from vw_sprint_userstories_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
-            userstories_report_data = conn.postgres_rows_select(connection,statement)
-            statement = "select * from vw_sprint_summary_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
-            tot_report_headers = conn.get_table_culomns(connection,'vw_sprint_summary_report')
-            tot_report_data = conn.postgres_rows_select(connection,statement)
-            statement = "select * from vw_sprint_issues_report where sprint_title='{0}'".format(sprint_header['sprint_title'])
-            issues_report_headers = conn.get_table_culomns(connection,'vw_sprint_issues_report')
-            issues_report_data = conn.postgres_rows_select(connection,statement)
-            html = build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,userstories_report_data,issues_report_headers,issues_report_data)
+            sprint_id = sprint_header['sprint_id']
+            sprint_title = sprint_header['sprint_title']
+            html = ""# build_HTML(tot_report_headers,tot_report_data,userstories_report_headers,userstories_report_data,issues_report_headers,issues_report_data,image_title)
+            tot_report_html = tot_report_to_HTML(sprint_title,connection)
+            userstories_report_html = userstories_report_to_HTML(sprint_title,connection)
+            issues_report_html = issues_report_to_HTML(sprint_title,connection)
             if output_file:
                 project_path = config['project']['path']
                 html_lib = os.path.join(project_path,'.yodiz/debug/html/')
@@ -194,6 +269,7 @@ def send(config,mailing_list,output_file):
                 html_file.writelines(html)
                 html_file.close()
             else:
+                create_sprint_chart(config,sprint_id)
                 subject = "Sprint '{0}' report - day {1} out of {2} days".format(sprint_header['sprint_title'],sprint_header['day_number'],sprint_header['total_days'])
                 to_list = None
                 cc_list = None
@@ -204,5 +280,5 @@ def send(config,mailing_list,output_file):
                     if 'green' in sprint_header['sprint_title'].lower():
                         to_list = config['mailing_list']['sprints']['green']['to']
                         cc_list = config['mailing_list']['sprints']['green']['cc']
-                fnx.send_email(subject,html,to_list,cc_list)
+                send_email_image(config,sprint_id,sprint_title,tot_report_html,userstories_report_html,issues_report_html,to_list=to_list,cc_list=cc_list)
             i += 1
