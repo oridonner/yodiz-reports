@@ -65,8 +65,8 @@ def main():
     if params.cmd_object == 'pull':
         transact_guid = uuid.uuid4()
         url_headers={}
-        url_headers['api-key']= params.key
-        url_headers['api-token']= params.token
+        url_headers['api-key']= config["yodiz"]["api-key"] #params.key
+        url_headers['api-token']= config["yodiz"]["api-token"] #params.token
         table_name = params.resource
         if params.truncate:
             conn.truncate_table(config,table_name,transact_guid)

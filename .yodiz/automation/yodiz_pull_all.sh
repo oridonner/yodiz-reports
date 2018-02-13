@@ -39,6 +39,7 @@ $psql -h $postgres_host -p $postgres_port -U $postgres_user -d $postgres_dbname 
 
 # send e-mail test reports 
 $prereq_python $project mail --inv
-$prereq_python $project mail --sprints 
-$prereq_python $project mail --tasks
-$prereq_python $project mail --release
+$prereq_python $project mail --sprints  
+#$prereq_python $project mail --tasks
+#$prereq_python $project mail --release
+$prereq_python $project mail --capacity

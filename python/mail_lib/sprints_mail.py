@@ -277,7 +277,7 @@ def send(config,mailing_list,output_file):
                     if 'blue' in sprint_header['sprint_title'].lower():
                         to_list = config['mailing_list']['sprints']['blue']['to']
                         cc_list = config['mailing_list']['sprints']['blue']['cc']
-                    if 'green' in sprint_header['sprint_title'].lower():
+                    if 'query engine' in sprint_header['sprint_title'].lower():
                         to_list = config['mailing_list']['sprints']['green']['to']
                         cc_list = config['mailing_list']['sprints']['green']['cc']
                 send_email_image(config,sprint_id,sprint_title,tot_report_html,userstories_report_html,issues_report_html,to_list=to_list,cc_list=cc_list)
